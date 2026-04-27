@@ -13,7 +13,7 @@ class AdminUserController extends Controller
     {
         $admins = Admin::latest()->get();
 
-        return view('admin.admins.index', compact('admins'));
+        return view('admin.admins.index', compact('fawzi'));
     }
 
     public function store(Request $request)

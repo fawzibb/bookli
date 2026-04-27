@@ -81,7 +81,6 @@ Route::middleware(['auth:business', 'business.subscription'])->prefix('owner')->
     Route::post('/schedules/weekly', [ScheduleController::class, 'updateWeekly'])->name('owner.schedules.updateWeekly');
     Route::post('/schedules/recurring', [ScheduleController::class, 'storeRecurring'])->name('owner.schedules.storeRecurring');
     Route::post('/schedules/date', [ScheduleController::class, 'storeDate'])->name('owner.schedules.storeDate');
-    Route::delete('/schedules/{blockedTime}', [ScheduleController::class, 'destroy'])->name('owner.schedules.destroy');
     Route::get('/qr-code', [QrCodeController::class, 'index'])->name('owner.qrcode');
     Route::get('/services', [ServiceController::class, 'index'])->name('owner.services.index');
     Route::post('/services', [ServiceController::class, 'store'])->name('owner.services.store');
@@ -95,11 +94,11 @@ Route::middleware(['auth:business', 'business.subscription'])->prefix('owner')->
     Route::get('/bookings/completed', [OwnerBookingController::class, 'completed'])->name('owner.bookings.completed');
     Route::patch('/bookings/{booking}/status', [OwnerBookingController::class, 'updateStatus'])->name('owner.bookings.updateStatus');
     Route::delete('/bookings/{booking}', [OwnerBookingController::class, 'destroy'])->name('owner.bookings.destroy');
-        Route::delete('/owner/schedules/blocked-times/group', [ScheduleController::class, 'destroyGroup'])
-        ->name('owner.schedules.destroyGroup');
+Route::delete('/schedules/blocked-times/group', [ScheduleController::class, 'destroyGroup'])
+    ->name('owner.schedules.destroyGroup');
 
-    Route::delete('/owner/schedules/blocked-times/{blockedTime}', [ScheduleController::class, 'destroy'])
-    ->name('owner.schedules.destroy');
+Route::delete('/schedules/blocked-times/{blockedTime}', [ScheduleController::class, 'destroy'])
+    ->name('owner.schedules.blocked-times.destroy');
 
 
 Route::get('/public-page', [PublicPageController::class, 'index'])->name('owner.public-page.index');
