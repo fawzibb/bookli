@@ -4,10 +4,11 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('orders.{businessId}', function ($user, $businessId) {
     return (int) $user->business_id === (int) $businessId;
-});
+}, ['guards' => ['business']]);
+
 Broadcast::channel('bookings.{businessId}', function ($user, $businessId) {
     return (int) $user->business_id === (int) $businessId;
-});
+}, ['guards' => ['business']]);
 /*
 |--------------------------------------------------------------------------
 | Broadcast Channels
