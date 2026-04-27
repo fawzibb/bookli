@@ -13,7 +13,7 @@ class AdminUserController extends Controller
     {
         $admins = Admin::latest()->get();
 
-        return view('admin.admins.index', compact('fawzi'));
+        return view('admin.admins.index', compact('admins'));
     }
 
     public function store(Request $request)
@@ -49,7 +49,7 @@ class AdminUserController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (auth('admin')->user()->username !== 'admin') {
+            if (auth('admin')->user()->username !== 'fawzi') {
                 abort(403);
             }
 
