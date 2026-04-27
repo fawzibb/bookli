@@ -90,4 +90,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 });
 </script>
+<script id="bgn6fa">
+document.addEventListener('click', function () {
+    const audio = document.getElementById('new-order-sound');
+
+    if (audio) {
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            console.log('Audio unlocked');
+        }).catch(() => {});
+    }
+}, { once: true });
+</script>
 </x-layouts.app>

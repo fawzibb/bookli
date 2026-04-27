@@ -21,6 +21,9 @@ public function update(Request $request)
         'price_monthly' => 'nullable|numeric|min:0',
         'price_six_months' => 'nullable|numeric|min:0',
         'price_yearly' => 'nullable|numeric|min:0',
+
+        'contact_phone' => 'nullable|string|max:50',
+        'contact_email' => 'nullable|email|max:255',
     ]);
 
     foreach ($data as $key => $value) {
