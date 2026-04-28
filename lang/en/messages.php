@@ -329,4 +329,5 @@ return [
 'no_items_found' => 'No booking blocks found.',
 'menu_item_5' => 'And More',
 'booking_item_5' => 'And More',
+'contact_us_text' => 'Need help or have questions? Reach us anytime.',
 ];

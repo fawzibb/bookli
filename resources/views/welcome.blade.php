@@ -503,6 +503,52 @@ html[dir="rtl"] .mini-row{
         font-size:32px;
     }
 }
+.contact-stats{
+    grid-template-columns:repeat(2,1fr);
+    max-width:760px;
+    margin:auto;
+}
+
+.contact-card{
+    padding:24px;
+    text-align:start;
+}
+
+.stat-label{
+    font-size:13px;
+    font-weight:800;
+    color:var(--muted);
+    margin-bottom:8px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.stat-value{
+    font-size:20px;
+    font-weight:900;
+    color:var(--text);
+    word-break:break-word;
+}
+
+.contact-value{
+    line-height:1.6;
+}
+
+@media (max-width:768px){
+    .contact-stats{
+        grid-template-columns:1fr;
+    }
+}
+.contact-link{
+    color:var(--text);
+    font-weight:900;
+    text-decoration:none;
+}
+
+.contact-link:hover{
+    color:var(--primary);
+    text-decoration:underline;
+}
 </style>
 </head>
 
@@ -700,6 +746,46 @@ html[dir="rtl"] .mini-row{
                 </a>
             </div>
         </div>
+        @php
+    $contact = [
+        'phone' => \App\Models\SiteSetting::where('key', 'contact_phone')->value('value'),
+        'email' => \App\Models\SiteSetting::where('key', 'contact_email')->value('value'),
+    ];
+@endphp
+
+<div class="section">
+    <div class="section-head">
+        <h2 class="section-title">{{ __('messages.contact_us') }}</h2>
+        <p class="section-subtitle">{{ __('messages.contact_us_text') }}</p>
+    </div>
+
+    <div class="stats contact-stats">
+        <div class="stat contact-card">
+    <div class="stat-label">{{ __('messages.phone_whatsapp') }}</div>
+    <div class="stat-value contact-value">
+        @if(!empty($contact['phone']))
+            <a href="tel:{{ preg_replace('/\s+/', '', $contact['phone']) }}" class="contact-link">
+                {{ $contact['phone'] }}
+            </a>
+        @else
+            {{ __('messages.add_phone_later') }}
+        @endif
+    </div>
+</div>
+<div class="stat contact-card">
+    <div class="stat-label">{{ __('messages.email') }}</div>
+    <div class="stat-value contact-value">
+        @if(!empty($contact['email']))
+            <a href="mailto:{{ $contact['email'] }}" class="contact-link">
+                {{ $contact['email'] }}
+            </a>
+        @else
+            {{ __('messages.add_email_later') }}
+        @endif
+    </div>
+</div>>
+    </div>
+</div>
 
         <div class="footer">
             © {{ now()->year }} Bookli. {{ __('messages.footer_rights') }}

@@ -165,14 +165,26 @@
         <div class="stat contact-card">
             <div class="stat-label">{{ __('messages.phone_whatsapp') }}</div>
             <div class="stat-value contact-value">
-                {{ $contact['phone'] ?? __('messages.add_phone_later') }}
+                @if(!empty($contact['phone']))
+                    <a href="tel:{{ preg_replace('/\s+/', '', $contact['phone']) }}" class="contact-link">
+                        {{ $contact['phone'] }}
+                    </a>
+                @else
+                    {{ __('messages.add_phone_later') }}
+                @endif
             </div>
         </div>
 
         <div class="stat contact-card">
             <div class="stat-label">{{ __('messages.email') }}</div>
             <div class="stat-value contact-value">
-                {{ $contact['email'] ?? __('messages.add_email_later') }}
+                @if(!empty($contact['email']))
+                    <a href="mailto:{{ $contact['email'] }}" class="contact-link">
+                        {{ $contact['email'] }}
+                    </a>
+                @else
+                    {{ __('messages.add_email_later') }}
+                @endif
             </div>
         </div>
 
