@@ -40,16 +40,56 @@ body{
     padding:32px;
     border-radius:var(--radius);
     margin-bottom:24px;
+    overflow:hidden;
+
+    height:180px;
 }
 
-.hero h1{
+.hero-content{
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:center;
+    gap:24px;
+    height:100%;
+}
+
+.hero-text{
+    min-width:0;
+    max-width:680px;
+}
+
+.hero-text h1{
     margin:0 0 10px;
     font-size:34px;
+    line-height:1.1;
 }
 
-.hero p{
+.hero-text p{
     margin:0;
     color:rgba(255,255,255,.85);
+}
+
+.hero-logo-wrap{
+    justify-self:end;
+    height:100%;
+    width:320px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.hero-logo{
+    width:100%;
+    height:100%;
+    max-width:300px;
+    max-height:160px;
+    object-fit:contain;
+    background:transparent;
+    border:none;
+    padding:0;
+    box-shadow:none;
+    filter:drop-shadow(0 12px 24px rgba(0,0,0,.20));
 }
 
 .grid{
@@ -254,7 +294,7 @@ body.theme-luxury .hero{
     padding:55px;
 }
 
-body.theme-luxury .hero h1{
+body.theme-luxury .hero-text h1{
     font-size:42px;
 }
 
@@ -266,14 +306,38 @@ body.theme-luxury .card{
     .grid{
         grid-template-columns:1fr;
     }
+    .hero{
+    height:auto;
+    min-height:220px;
+    padding:26px;
+}
 
-    .hero h1{
-        font-size:28px;
-    }
+    .hero-content{
+    grid-template-columns:1fr;
+    text-align:center;
+}
 
-    body.theme-luxury .hero h1{
-        font-size:32px;
-    }
+.hero-logo-wrap{
+    justify-self:center;
+    order:-1;
+    width:100%;
+    height:90px;
+}
+
+.hero-logo{
+    max-height:80px;
+    max-width:220px;
+    width:auto;
+    height:auto;
+}
+
+.hero-text h1{
+    font-size:28px;
+}
+
+body.theme-luxury .hero-text h1{
+    font-size:32px;
+}
 
     .wrapper{
         padding:16px;
@@ -301,5 +365,25 @@ body.theme-luxury .card{
     background:var(--button);
     color:#fff;
     border-color:var(--button);
+}
+/* Bigger logo for Elegant + Luxury */
+body.theme-elegant .hero-logo-wrap,
+body.theme-luxury .hero-logo-wrap{
+    width:360px;
+}
+
+body.theme-elegant .hero-logo,
+body.theme-luxury .hero-logo{
+    max-width:340px;
+    max-height:170px;
+}
+
+/* Mobile */
+@media (max-width:900px){
+    body.theme-elegant .hero-logo,
+    body.theme-luxury .hero-logo{
+        max-width:260px;
+        max-height:100px;
+    }
 }
 </style>

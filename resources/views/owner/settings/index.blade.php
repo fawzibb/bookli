@@ -52,17 +52,35 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('owner.settings.update') }}">
-        @csrf
+    <form method="POST" action="{{ route('owner.settings.update') }}" enctype="multipart/form-data">
+    @csrf
 
-        <div class="grid" style="grid-template-columns:1fr 1fr;">
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
 
-            <div class="form-group">
-                <label class="label">{{ __('messages.business_name') }}</label>
-                <input class="input" type="text" name="name"
-                       value="{{ old('name', $business->name) }}" required>
-            </div>
+        <div class="form-group">
+            <label class="label">{{ __('messages.business_name') }}</label>
+            <input class="input" type="text" name="name"
+                   value="{{ old('name', $business->name) }}" required>
+        </div>
 
+        <div class="form-group">
+            <label class="label">{{ __('messages.business_logo') }}</label>
+
+            <input class="input" type="file" name="logo" accept="image/*">
+
+            @if(!empty($business->logo))
+                <div style="margin-top:12px;">
+                    <img src="{{ asset('storage/' . $business->logo) }}"
+                        alt="{{ $business->name }}"
+                        style="width:90px;height:90px;object-fit:cover;border-radius:16px;border:1px solid #e5e7eb;">
+                </div>
+
+                <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;">
+                    <input type="checkbox" name="remove_logo" value="1">
+                    Remove current logo
+                </label>
+            @endif
+        </div>
             <div class="form-group">
                 <label class="label">{{ __('messages.phone') }}</label>
                 <input class="input" type="text" name="phone"

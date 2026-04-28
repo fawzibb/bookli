@@ -26,5 +26,6 @@ class BusinessSetting extends Model
     'button_color',
     'font_family',
     'border_radius',
+    'logo',
 ];
 }
