@@ -246,5 +246,67 @@
             font-size: 30px;
         }
     }
+    .contact-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:18px;
+    margin-top:22px;
+}
+
+.contact-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:24px;
+    box-shadow:var(--shadow);
+    transition:.2s;
+}
+
+.contact-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 30px rgba(15,23,42,.08);
+}
+
+.stat-label{
+    font-size:13px;
+    font-weight:800;
+    color:var(--muted);
+    margin-bottom:10px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.stat-value{
+    font-size:20px;
+    font-weight:900;
+    color:var(--text);
+    line-height:1.6;
+    word-break:break-word;
+}
+
+.contact-value{
+    display:block;
+}
+
+.contact-link{
+    color:var(--text);
+    text-decoration:none;
+    transition:.2s;
+}
+
+.contact-link:hover{
+    color:var(--primary);
+    text-decoration:underline;
+}
+
+html[dir="rtl"] .contact-card{
+    text-align:right;
+}
+
+@media (max-width:768px){
+    .contact-grid{
+        grid-template-columns:1fr;
+    }
+}
 </style>
 </x-layouts.app>
