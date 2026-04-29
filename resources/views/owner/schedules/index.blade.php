@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('owner.schedules.destroy', $blocked) }}"
+                <form method="POST" action="{{ route('owner.schedules.blocked-times.destroy', $blocked) }}"
                       onsubmit="return confirm('Delete this blocked time?')">
                     @csrf
                     @method('DELETE')
