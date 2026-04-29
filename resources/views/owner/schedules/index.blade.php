@@ -228,6 +228,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 name="reason"
                 placeholder="{{ __('messages.reason') }}"
                 style="margin-top:10px;">
+            <label style="display:flex; align-items:center; gap:8px; margin:10px 0 14px;">
+                <input type="checkbox" name="full_day" value="1">
+                Full day
+            </label>
 
             <button class="btn" style="margin-top:10px;">
                 {{ $isBooking ? __('messages.add_date_block') : __('messages.add_closed_time') }}

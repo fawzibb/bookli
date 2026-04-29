@@ -187,29 +187,32 @@ class ScheduleController extends Controller
         return back()->with('success', 'Recurring blocked time added.');
     }
 
-    public function storeDate(Request $request)
-    {
-        $businessId = Auth::guard('business')->user()->business_id;
+public function storeDate(Request $request)
+{
+    $businessId = Auth::guard('business')->user()->business_id;
 
-        $request->validate([
-            'blocked_date' => ['required', 'date'],
-            'start_time' => ['nullable'],
-            'end_time' => ['nullable'],
-            'reason' => ['nullable'],
-        ]);
+    $request->validate([
+        'blocked_date' => ['required', 'date'],
+        'start_time' => ['nullable', 'required_unless:full_day,1'],
+        'end_time' => ['nullable', 'required_unless:full_day,1'],
+        'reason' => ['nullable', 'string', 'max:255'],
+    ]);
 
-        BlockedTime::create([
-            'business_id' => $businessId,
-            'blocked_date' => $request->blocked_date,
-            'is_recurring' => false,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'full_day' => false,
-            'reason' => $request->reason,
-        ]);
+    $isFullDay = $request->boolean('full_day');
 
-        return back()->with('success', 'Date blocked time added.');
-    }
+    BlockedTime::create([
+        'business_id' => $businessId,
+        'blocked_date' => $request->blocked_date,
+        'day_of_week' => null,
+        'is_recurring' => false,
+        'start_time' => $isFullDay ? null : $request->start_time,
+        'end_time' => $isFullDay ? null : $request->end_time,
+        'full_day' => $isFullDay,
+        'reason' => $request->reason,
+    ]);
+
+    return back()->with('success', 'Date blocked time added.');
+}
 
     public function destroy(BlockedTime $blockedTime)
     {
