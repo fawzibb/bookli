@@ -172,76 +172,85 @@ class PublicBusinessController extends Controller
         return response()->json($slots);
     }
 
-    public function storeBooking(Request $request, string $slug)
-    {
-        $business = Business::where('slug', $slug)->firstOrFail();
+   public function storeBooking(Request $request, string $slug)
+{
+    $business = Business::where('slug', $slug)->firstOrFail();
 
-        $request->validate([
-            'service_id' => ['required'],
-            'name' => ['required'],
-            'phone' => ['required'],
-            'booking_date' => ['required', 'date'],
-            'start_time' => ['required'],
+    $request->validate([
+        'service_id' => ['required'],
+        'name' => ['required'],
+        'phone' => ['required'],
+        'booking_date' => ['required', 'date'],
+        'start_time' => ['required'],
+    ]);
+
+    $service = Service::where('business_id', $business->id)
+        ->findOrFail($request->service_id);
+
+    $timezone = 'Asia/Beirut';
+
+    $start = Carbon::parse($request->booking_date . ' ' . $request->start_time, $timezone);
+
+    // Round service duration up to nearest 15 minutes
+    $effectiveDuration = (int) ceil($service->duration / 15) * 15;
+
+    $end = $start->copy()->addMinutes($effectiveDuration);
+
+    $slots = $this->getAvailableSlots(
+        $business,
+        $request->booking_date,
+        $service->duration
+    );
+
+    if (!in_array($start->format('H:i'), $slots)) {
+        return back()->withErrors([
+            'start_time' => 'Selected time is no longer available.',
         ]);
-
-        $service = Service::where('business_id', $business->id)
-            ->findOrFail($request->service_id);
-
-        $start = Carbon::parse($request->booking_date . ' ' . $request->start_time);
-        $end = $start->copy()->addMinutes($service->duration);
-
-        $slots = $this->getAvailableSlots(
-            $business,
-            $request->booking_date,
-            $service->duration
-        );
-
-        if (!in_array($start->format('H:i'), $slots)) {
-            return back()->withErrors([
-                'start_time' => 'Selected time is no longer available.',
-            ]);
-        }
-
-        $capacity = max(1, (int) ($business->capacity_per_slot ?? 1));
-
-        $bookingsCount = Booking::where('business_id', $business->id)
-            ->whereDate('booking_date', $request->booking_date)
-            ->where('start_time', $start->format('H:i:s'))
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->count();
-
-        if ($bookingsCount >= $capacity) {
-            return back()->withErrors([
-                'start_time' => 'This time slot is fully booked.',
-            ]);
-        }
-
-        $customer = Customer::firstOrCreate(
-            [
-                'business_id' => $business->id,
-                'phone' => $request->phone,
-            ],
-            [
-                'name' => $request->name,
-            ]
-        );
-
-        $booking = Booking::create([
-            'business_id' => $business->id,
-            'customer_id' => $customer->id,
-            'customer_name' => $request->name,
-            'customer_phone' => $request->phone,
-            'service_id' => $service->id,
-            'booking_date' => $request->booking_date,
-            'start_time' => $start->format('H:i:s'),
-            'end_time' => $end->format('H:i:s'),
-            'status' => 'pending',
-        ]);
-
-        event(new NewBookingCreated($booking));
-
-        return back()->with('success', 'Booking created successfully.');
     }
+
+    $capacity = max(1, (int) ($business->capacity_per_slot ?? 1));
+
+    $overlapCount = Booking::where('business_id', $business->id)
+        ->whereDate('booking_date', $request->booking_date)
+        ->whereIn('status', ['pending', 'confirmed'])
+        ->where(function ($query) use ($start, $end) {
+            $query->where('start_time', '<', $end->format('H:i:s'))
+                ->where('end_time', '>', $start->format('H:i:s'));
+        })
+        ->count();
+
+    if ($overlapCount >= $capacity) {
+        return back()->withErrors([
+            'start_time' => 'This time slot is fully booked.',
+        ]);
+    }
+
+    $customer = Customer::firstOrCreate(
+        [
+            'business_id' => $business->id,
+            'phone' => $request->phone,
+        ],
+        [
+            'name' => $request->name,
+        ]
+    );
+
+    $booking = Booking::create([
+        'business_id' => $business->id,
+        'customer_id' => $customer->id,
+        'customer_name' => $request->name,
+        'customer_phone' => $request->phone,
+        'service_id' => $service->id,
+        'booking_date' => $request->booking_date,
+        'start_time' => $start->format('H:i:s'),
+        'end_time' => $end->format('H:i:s'),
+        'status' => 'pending',
+    ]);
+
+    event(new NewBookingCreated($booking));
+
+    return back()->with('success', 'Booking created successfully.');
+}
 
     public function storeOrder(Request $request, string $slug)
     {
@@ -325,112 +334,134 @@ class PublicBusinessController extends Controller
     }
 
     private function getAvailableSlots($business, string $date, int $duration): array
-    {
-        $timezone = 'Asia/Beirut';
+{
+    $timezone = 'Asia/Beirut';
 
-        $selectedDate = Carbon::parse($date, $timezone);
-        $dayOfWeek = $selectedDate->dayOfWeek;
+    $selectedDate = Carbon::parse($date, $timezone);
+    $dayOfWeek = $selectedDate->dayOfWeek;
 
-        $schedule = WeeklySchedule::where('business_id', $business->id)
-            ->where('day_of_week', $dayOfWeek)
-            ->first();
+    $schedule = WeeklySchedule::where('business_id', $business->id)
+        ->where('day_of_week', $dayOfWeek)
+        ->first();
 
-        if (!$schedule || $schedule->is_off || !$schedule->open_time || !$schedule->close_time) {
-            return [];
-        }
-
-        $settings = BusinessSetting::where('business_id', $business->id)->first();
-        $interval = $settings?->slot_interval ?? 30;
-
-        $dayStart = Carbon::parse($date . ' ' . $schedule->open_time, $timezone);
-        $dayEnd = Carbon::parse($date . ' ' . $schedule->close_time, $timezone);
-
-        if ($dayEnd->lte($dayStart)) {
-            $dayEnd->addDay();
-        }
-
-        $blockedTimes = BlockedTime::where('business_id', $business->id)
-            ->where(function ($query) use ($date, $dayOfWeek) {
-                $query->where(function ($q) use ($date) {
-                    $q->where('is_recurring', false)
-                        ->where('blocked_date', $date);
-                })->orWhere(function ($q) use ($dayOfWeek) {
-                    $q->where('is_recurring', true)
-                        ->where('day_of_week', $dayOfWeek);
-                });
-            })
-            ->get();
-
-        $bookings = Booking::where('business_id', $business->id)
-            ->whereDate('booking_date', $date)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->get();
-
-        $capacity = max(1, (int) ($business->capacity_per_slot ?? 1));
-        $slots = [];
-        $now = now($timezone)->addMinutes(15);
-
-        for ($cursor = $dayStart->copy(); $cursor->lt($dayEnd); $cursor->addMinutes($interval)) {
-            $slotStart = $cursor->copy();
-            $slotEnd = $cursor->copy()->addMinutes($duration);
-
-            if ($slotEnd->gt($dayEnd)) {
-                continue;
-            }
-
-            if ($slotStart->lte($now)) {
-                continue;
-            }
-
-            $blocked = false;
-
-            foreach ($blockedTimes as $item) {
-                if ($item->full_day) {
-                    $blocked = true;
-                    break;
-                }
-
-                if (!$item->start_time || !$item->end_time) {
-                    continue;
-                }
-
-                $blockedStart = Carbon::parse($date . ' ' . $item->start_time, $timezone);
-                $blockedEnd = Carbon::parse($date . ' ' . $item->end_time, $timezone);
-
-                if ($blockedEnd->lte($blockedStart)) {
-                    $blockedEnd->addDay();
-                }
-
-                if ($slotStart < $blockedEnd && $slotEnd > $blockedStart) {
-                    $blocked = true;
-                    break;
-                }
-            }
-
-            if ($blocked) {
-                continue;
-            }
-
-            $overlapCount = 0;
-
-            foreach ($bookings as $booking) {
-                $bookingStart = Carbon::parse($date . ' ' . $booking->start_time, $timezone);
-                $bookingEnd = Carbon::parse($date . ' ' . $booking->end_time, $timezone);
-
-                if ($bookingEnd->lte($bookingStart)) {
-                    $bookingEnd->addDay();
-                }
-
-                if ($slotStart < $bookingEnd && $slotEnd > $bookingStart) {
-                    $overlapCount++;
-                }
-            }
-
-            if ($overlapCount < $capacity) {
-                $slots[] = $slotStart->format('H:i');
-            }
-        }
-
-        return $slots;
+    if (!$schedule || $schedule->is_off || !$schedule->open_time || !$schedule->close_time) {
+        return [];
     }
+
+    // العرض الأساسي كل 30 دقيقة
+    $interval = 30;
+
+    // مدة الحجز الفعلية: أقل شيء 15 دقيقة، وتُقرب لأعلى 15
+    $effectiveDuration = (int) ceil($duration / 15) * 15;
+
+    $dayStart = Carbon::parse($date . ' ' . $schedule->open_time, $timezone);
+    $dayEnd = Carbon::parse($date . ' ' . $schedule->close_time, $timezone);
+
+    if ($dayEnd->lte($dayStart)) {
+        $dayEnd->addDay();
+    }
+
+    $blockedTimes = BlockedTime::where('business_id', $business->id)
+        ->where(function ($query) use ($date, $dayOfWeek) {
+            $query->where(function ($q) use ($date) {
+                $q->where('is_recurring', false)
+                    ->where('blocked_date', $date);
+            })->orWhere(function ($q) use ($dayOfWeek) {
+                $q->where('is_recurring', true)
+                    ->where('day_of_week', $dayOfWeek);
+            });
+        })
+        ->get();
+
+    $bookings = Booking::where('business_id', $business->id)
+        ->whereDate('booking_date', $date)
+        ->whereIn('status', ['pending', 'confirmed'])
+        ->get();
+
+    $capacity = max(1, (int) ($business->capacity_per_slot ?? 1));
+    $now = now($timezone)->addMinutes(15);
+
+    $candidates = [];
+
+    // مواعيد أساسية: 09:00 / 09:30 / 10:00
+    for ($cursor = $dayStart->copy(); $cursor->lt($dayEnd); $cursor->addMinutes($interval)) {
+        $candidates[] = $cursor->copy();
+    }
+
+    // أضف وقت نهاية الحجوزات القصيرة مثل 09:15
+    foreach ($bookings as $booking) {
+        $bookingEnd = Carbon::parse($date . ' ' . $booking->end_time, $timezone);
+
+        if ($bookingEnd->betweenIncluded($dayStart, $dayEnd)) {
+            $candidates[] = $bookingEnd->copy();
+        }
+    }
+
+    $slots = [];
+
+    foreach ($candidates as $slotStart) {
+        $slotEnd = $slotStart->copy()->addMinutes($effectiveDuration);
+
+        if ($slotEnd->gt($dayEnd)) {
+            continue;
+        }
+
+        if ($slotStart->lte($now)) {
+            continue;
+        }
+
+        $blocked = false;
+
+        foreach ($blockedTimes as $item) {
+            if ($item->full_day) {
+                $blocked = true;
+                break;
+            }
+
+            if (!$item->start_time || !$item->end_time) {
+                continue;
+            }
+
+            $blockedStart = Carbon::parse($date . ' ' . $item->start_time, $timezone);
+            $blockedEnd = Carbon::parse($date . ' ' . $item->end_time, $timezone);
+
+            if ($blockedEnd->lte($blockedStart)) {
+                $blockedEnd->addDay();
+            }
+
+            if ($slotStart < $blockedEnd && $slotEnd > $blockedStart) {
+                $blocked = true;
+                break;
+            }
+        }
+
+        if ($blocked) {
+            continue;
+        }
+
+        $overlapCount = 0;
+
+        foreach ($bookings as $booking) {
+            $bookingStart = Carbon::parse($date . ' ' . $booking->start_time, $timezone);
+            $bookingEnd = Carbon::parse($date . ' ' . $booking->end_time, $timezone);
+
+            if ($bookingEnd->lte($bookingStart)) {
+                $bookingEnd->addDay();
+            }
+
+            if ($slotStart < $bookingEnd && $slotEnd > $bookingStart) {
+                $overlapCount++;
+            }
+        }
+
+        if ($overlapCount < $capacity) {
+            $slots[] = $slotStart->format('H:i');
+        }
+    }
+
+    $slots = array_values(array_unique($slots));
+    sort($slots);
+
+    return $slots;
+}
 }
