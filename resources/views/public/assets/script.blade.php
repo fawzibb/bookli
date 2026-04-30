@@ -55,4 +55,41 @@ if(service && date){
     date.addEventListener('change', loadSlots);
 }
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabs = document.querySelectorAll('.service-group-tab');
+    const serviceSelect = document.getElementById('service_id');
+
+    if (!tabs.length || !serviceSelect) return;
+
+    const allOptions = Array.from(serviceSelect.querySelectorAll('option'));
+
+    function filterServices(groupId) {
+        serviceSelect.value = '';
+
+        allOptions.forEach(option => {
+            if (!option.value) {
+                option.hidden = false;
+                return;
+            }
+
+            option.hidden = option.dataset.groupId !== groupId;
+        });
+
+        tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.groupId === groupId);
+        });
+
+        serviceSelect.dispatchEvent(new Event('change'));
+    }
+
+    filterServices(tabs[0].dataset.groupId);
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+            filterServices(this.dataset.groupId);
+        });
+    });
+});
+</script>
 @endif

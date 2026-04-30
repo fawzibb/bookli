@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ServiceGroup;
 
 class Service extends Model
 {
@@ -14,5 +15,12 @@ class Service extends Model
     'price',
     'duration',
     'is_active',
+    'service_group_id',
 ];
+
+public function serviceGroup()
+{
+    return $this->belongsTo(ServiceGroup::class);
+}
+
 }

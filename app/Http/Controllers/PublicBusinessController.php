@@ -35,13 +35,24 @@ class PublicBusinessController extends Controller
         );
 
         if ($business->mode === 'booking') {
-            $services = Service::where('business_id', $business->id)
-                ->where('is_active', true)
-                ->get();
+            $serviceGroups = \App\Models\ServiceGroup::with(['services' => function ($query) use ($business) {
+        $query->where('business_id', $business->id)
+            ->where('is_active', true)
+            ->orderBy('name');
+            }])
+            ->where('business_id', $business->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $services = Service::where('business_id', $business->id)
+            ->where('is_active', true)
+            ->get();
 
             return view('public.booking.index', compact(
                 'business',
                 'services',
+                'serviceGroups',
                 'settings'
             ));
         }
@@ -152,25 +163,25 @@ class PublicBusinessController extends Controller
     }
 
     public function availableSlots(Request $request, string $slug)
-    {
-        $business = Business::where('slug', $slug)->firstOrFail();
+{
+    $business = Business::where('slug', $slug)->firstOrFail();
 
-        $request->validate([
-            'service_id' => ['required', 'exists:services,id'],
-            'date' => ['required', 'date'],
-        ]);
+    $request->validate([
+        'service_id' => ['required', 'exists:services,id'],
+        'date' => ['required', 'date'],
+    ]);
 
-        $service = Service::where('business_id', $business->id)
-            ->findOrFail($request->service_id);
+    $service = Service::where('business_id', $business->id)
+        ->findOrFail($request->service_id);
 
-        $slots = $this->getAvailableSlots(
-            $business,
-            $request->date,
-            $service->duration
-        );
+    $slots = $this->getAvailableSlots(
+        $business,
+        $service,
+        $request->date
+    );
 
-        return response()->json($slots);
-    }
+    return response()->json($slots);
+}
 
    public function storeBooking(Request $request, string $slug)
 {
@@ -191,15 +202,13 @@ class PublicBusinessController extends Controller
 
     $start = Carbon::parse($request->booking_date . ' ' . $request->start_time, $timezone);
 
-    // Round service duration up to nearest 15 minutes
     $effectiveDuration = (int) ceil($service->duration / 15) * 15;
-
     $end = $start->copy()->addMinutes($effectiveDuration);
 
     $slots = $this->getAvailableSlots(
         $business,
-        $request->booking_date,
-        $service->duration
+        $service,
+        $request->booking_date
     );
 
     if (!in_array($start->format('H:i'), $slots)) {
@@ -208,11 +217,15 @@ class PublicBusinessController extends Controller
         ]);
     }
 
-    $capacity = max(1, (int) ($business->capacity_per_slot ?? 1));
+    $groupId = $service->service_group_id;
+    $capacity = max(1, (int) optional($service->serviceGroup)->capacity_per_slot);
 
     $overlapCount = Booking::where('business_id', $business->id)
         ->whereDate('booking_date', $request->booking_date)
         ->whereIn('status', ['pending', 'confirmed'])
+        ->whereHas('service', function ($q) use ($groupId) {
+            $q->where('service_group_id', $groupId);
+        })
         ->where(function ($query) use ($start, $end) {
             $query->where('start_time', '<', $end->format('H:i:s'))
                 ->where('end_time', '>', $start->format('H:i:s'));
@@ -333,7 +346,7 @@ class PublicBusinessController extends Controller
         return back()->with('success', 'Order created successfully.');
     }
 
-    private function getAvailableSlots($business, string $date, int $duration): array
+    private function getAvailableSlots($business, Service $service, string $date): array
 {
     $timezone = 'Asia/Beirut';
 
@@ -348,10 +361,9 @@ class PublicBusinessController extends Controller
         return [];
     }
 
-    // العرض الأساسي كل 30 دقيقة
     $interval = 30;
 
-    // مدة الحجز الفعلية: أقل شيء 15 دقيقة، وتُقرب لأعلى 15
+    $duration = $service->duration;
     $effectiveDuration = (int) ceil($duration / 15) * 15;
 
     $dayStart = Carbon::parse($date . ' ' . $schedule->open_time, $timezone);
@@ -373,22 +385,26 @@ class PublicBusinessController extends Controller
         })
         ->get();
 
-    $bookings = Booking::where('business_id', $business->id)
+    $groupId = $service->service_group_id;
+
+    $bookings = Booking::with('service')
+        ->where('business_id', $business->id)
         ->whereDate('booking_date', $date)
         ->whereIn('status', ['pending', 'confirmed'])
+        ->whereHas('service', function ($q) use ($groupId) {
+            $q->where('service_group_id', $groupId);
+        })
         ->get();
 
-    $capacity = max(1, (int) ($business->capacity_per_slot ?? 1));
+    $capacity = max(1, (int) optional($service->serviceGroup)->capacity_per_slot);
     $now = now($timezone)->addMinutes(15);
 
     $candidates = [];
 
-    // مواعيد أساسية: 09:00 / 09:30 / 10:00
     for ($cursor = $dayStart->copy(); $cursor->lt($dayEnd); $cursor->addMinutes($interval)) {
         $candidates[] = $cursor->copy();
     }
 
-    // أضف وقت نهاية الحجوزات القصيرة مثل 09:15
     foreach ($bookings as $booking) {
         $bookingEnd = Carbon::parse($date . ' ' . $booking->end_time, $timezone);
 

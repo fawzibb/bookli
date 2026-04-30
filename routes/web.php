@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Owner\BusinessSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Owner\ServiceGroupController;
 
 Route::get('/language/{locale}', function ($locale) {
     if (! in_array($locale, ['en', 'ar'])) {
@@ -94,15 +95,18 @@ Route::middleware(['auth:business', 'business.subscription'])->prefix('owner')->
     Route::get('/bookings/completed', [OwnerBookingController::class, 'completed'])->name('owner.bookings.completed');
     Route::patch('/bookings/{booking}/status', [OwnerBookingController::class, 'updateStatus'])->name('owner.bookings.updateStatus');
     Route::delete('/bookings/{booking}', [OwnerBookingController::class, 'destroy'])->name('owner.bookings.destroy');
-Route::delete('/schedules/blocked-times/group', [ScheduleController::class, 'destroyGroup'])
-    ->name('owner.schedules.destroyGroup');
+    Route::delete('/schedules/blocked-times/group', [ScheduleController::class, 'destroyGroup'])
+        ->name('owner.schedules.destroyGroup');
 
-Route::delete('/schedules/blocked-times/{blockedTime}', [ScheduleController::class, 'destroy'])
-    ->name('owner.schedules.blocked-times.destroy');
+    Route::delete('/schedules/blocked-times/{blockedTime}', [ScheduleController::class, 'destroy'])
+        ->name('owner.schedules.blocked-times.destroy');
 
 
-Route::get('/public-page', [PublicPageController::class, 'index'])->name('owner.public-page.index');
-Route::post('/public-page', [PublicPageController::class, 'update'])->name('owner.public-page.update');
+    Route::resource('service-groups', ServiceGroupController::class)
+        ->names('owner.service-groups');
+
+    Route::get('/public-page', [PublicPageController::class, 'index'])->name('owner.public-page.index');
+    Route::post('/public-page', [PublicPageController::class, 'update'])->name('owner.public-page.update');
 
     Route::get('/orders', [OrderController::class, 'index'])->name('owner.orders.index');
     Route::get('/orders/completed', [OrderController::class, 'completed'])

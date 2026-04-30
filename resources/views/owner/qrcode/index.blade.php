@@ -8,6 +8,7 @@
         @if(auth()->guard('business')->user()->business->mode === 'booking')
             <a class="nav-link" href="{{ route('owner.bookings.index') }}">{{ __('messages.bookings') }}</a>
             <a class="nav-link" href="{{ route('owner.services.index') }}">{{ __('messages.services') }}</a>
+            <a class="nav-link" href="{{ route('owner.service-groups.index') }}">{{ __('messages.service_groups') }}</a>
             <a class="nav-link" href="{{ route('owner.schedules.index') }}">{{ __('messages.schedules') }}</a>
         @else
             <a class="nav-link" href="{{ route('owner.categories.index') }}">{{ __('messages.categories') }}</a>

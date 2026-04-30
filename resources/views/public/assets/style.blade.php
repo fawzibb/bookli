@@ -377,6 +377,45 @@ body.theme-luxury .hero-logo{
     max-width:340px;
     max-height:170px;
 }
+.service-group-tabs{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;        /* 👈 scroll */
+    white-space:nowrap;     /* 👈 يمنع النزول */
+    padding-bottom:6px;
+    margin-bottom:14px;
+
+    scrollbar-width:thin;
+}
+
+.service-group-tabs::-webkit-scrollbar{
+    height:6px;
+}
+
+.service-group-tabs::-webkit-scrollbar-thumb{
+    background:rgba(0,0,0,0.2);
+    border-radius:10px;
+}
+.service-group-tab{
+    flex:0 0 auto;
+    display:inline-block; 
+    width:auto;           
+    max-width:max-content;
+
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text);
+    padding:10px 18px;
+    border-radius:999px;
+    cursor:pointer;
+    font-weight:700;
+}
+
+.service-group-tab.active{
+    background:var(--primary);
+    color:white;
+    border-color:var(--primary);
+}
 
 /* Mobile */
 @media (max-width:900px){

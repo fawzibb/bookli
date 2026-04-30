@@ -10,6 +10,7 @@
 @if($business->mode === 'booking')
     <a class="nav-link" href="{{ route('owner.bookings.index') }}">{{ __('messages.bookings') }}</a>
     <a class="nav-link" href="{{ route('owner.services.index') }}">{{ __('messages.services') }}</a>
+    <a class="nav-link" href="{{ route('owner.service-groups.index') }}">{{ __('messages.service_groups') }}</a>
     <a class="nav-link" href="{{ route('owner.schedules.index') }}">{{ __('messages.schedules') }}</a>
 @else
     <a class="nav-link" href="{{ route('owner.categories.index') }}">{{ __('messages.categories') }}</a>
@@ -104,17 +105,6 @@
                 <input class="input" type="text" name="address"
                        value="{{ old('address', $business->address) }}">
             </div>
-
-            <div class="form-group">
-                <label class="label">{{ __('messages.capacity_per_slot') }}</label>
-                <input class="input" type="number" name="capacity_per_slot"
-                       value="{{ old('capacity_per_slot', $business->capacity_per_slot ?? 1) }}"
-                       min="1">
-            </div>
-
-            <p class="page-subtitle" style="margin-top:6px;">
-                {{ __('messages.capacity_per_slot_desc') }}
-            </p>
 
         </div>
 

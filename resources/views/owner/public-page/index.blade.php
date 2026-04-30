@@ -10,6 +10,7 @@
 @if($business->mode === 'booking')
     <a class="nav-link" href="{{ route('owner.bookings.index') }}">{{ __('messages.bookings') }}</a>
     <a class="nav-link" href="{{ route('owner.services.index') }}">{{ __('messages.services') }}</a>
+    <a class="nav-link" href="{{ route('owner.service-groups.index') }}">{{ __('messages.service_groups') }}</a>
     <a class="nav-link" href="{{ route('owner.schedules.index') }}">{{ __('messages.schedules') }}</a>
 @else
     <a class="nav-link" href="{{ route('owner.categories.index') }}">{{ __('messages.categories') }}</a>
@@ -127,13 +128,25 @@
                 </select>
             </div>
             <div class="form-group">
-    <label class="label">{{ __('messages.hero_text') }}</label>
-    <input type="text"
-           name="public_tagline"
-           class="input"
-           value="{{ $settings->public_tagline }}"
-           placeholder="Write your business message">
-</div>
+                <label class="label">{{ __('messages.hero_text') }}</label>
+                <input type="text"
+                    name="public_tagline"
+                    class="input"
+                    value="{{ $settings->public_tagline }}"
+                    placeholder="Write your business message">
+            </div>
+            <label style="display:flex; gap:8px; align-items:center;">
+                    <input type="checkbox"
+                        name="group_services_on_public_page"
+                        value="1"
+                        {{ old('group_services_on_public_page', $settings->group_services_on_public_page ?? false) ? 'checked' : '' }}>
+
+                    {{ __('messages.group_services_on_public_page') }}
+                </label>
+
+                <p class="text-muted">
+                    {{ __('messages.group_services_on_public_page_desc') }}
+                </p>
 
             <button class="btn" type="submit">{{ __('messages.save_design') }}</button>
         </form>

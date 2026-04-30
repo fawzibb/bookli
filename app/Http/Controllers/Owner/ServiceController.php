@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\ServiceGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,11 +14,17 @@ class ServiceController extends Controller
     {
         $businessId = Auth::guard('business')->user()->business_id;
 
-        $services = Service::where('business_id', $businessId)
+        $services = Service::with('serviceGroup')
+            ->where('business_id', $businessId)
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('owner.services.index', compact('services'));
+        $groups = ServiceGroup::where('business_id', $businessId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('owner.services.index', compact('services', 'groups'));
     }
 
     public function store(Request $request)
@@ -25,14 +32,20 @@ class ServiceController extends Controller
         $businessId = Auth::guard('business')->user()->business_id;
 
         $request->validate([
+            'service_group_id' => ['required', 'exists:service_groups,id'],
             'name' => ['required', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'duration' => ['required', 'integer', 'min:5'],
             'description' => ['nullable'],
         ]);
 
+        $group = ServiceGroup::where('business_id', $businessId)
+            ->where('id', $request->service_group_id)
+            ->firstOrFail();
+
         Service::create([
             'business_id' => $businessId,
+            'service_group_id' => $group->id,
             'name' => $request->name,
             'price' => $request->price,
             'duration' => $request->duration,
@@ -50,6 +63,7 @@ class ServiceController extends Controller
         abort_if($service->business_id !== $businessId, 403);
 
         $request->validate([
+            'service_group_id' => ['required', 'exists:service_groups,id'],
             'name' => ['required', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'duration' => ['required', 'integer', 'min:5'],
@@ -57,7 +71,12 @@ class ServiceController extends Controller
             'is_active' => ['nullable'],
         ]);
 
+        $group = ServiceGroup::where('business_id', $businessId)
+            ->where('id', $request->service_group_id)
+            ->firstOrFail();
+
         $service->update([
+            'service_group_id' => $group->id,
             'name' => $request->name,
             'price' => $request->price,
             'duration' => $request->duration,

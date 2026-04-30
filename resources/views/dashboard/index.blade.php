@@ -14,6 +14,7 @@
         @if($isBooking)
             <a class="nav-link" href="{{ route('owner.bookings.index') }}">{{ __('messages.bookings') }}</a>
             <a class="nav-link" href="{{ route('owner.services.index') }}">{{ __('messages.services') }}</a>
+            <a class="nav-link" href="{{ route('owner.service-groups.index') }}">{{ __('messages.service_groups') }}</a>
             <a class="nav-link" href="{{ route('owner.schedules.index') }}">{{ __('messages.schedules') }}</a>
         @endif
 
@@ -83,6 +84,11 @@
                 <h3>{{ __('messages.manage_services') }}</h3>
                 <p class="page-subtitle">{{ __('messages.manage_services_desc') }}</p>
                 <a class="btn" href="{{ route('owner.services.index') }}">{{ __('messages.open') }}</a>
+            </div>
+            <div class="card dash-card">
+                <h3>{{ __('messages.service_groups') }}</h3>
+                <p class="page-subtitle">{{ __('messages.manage_service_groups_desc') }}</p>
+                <a class="btn" href="{{ route('owner.service-groups.index') }}">{{ __('messages.open') }}</a>
             </div>
 
             <div class="card dash-card">

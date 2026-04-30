@@ -8,6 +8,7 @@
 <a class="nav-link" href="{{ route('dashboard') }}">{{ __('messages.dashboard') }}</a>
 <a class="nav-link active" href="{{ route('owner.bookings.index') }}">{{ __('messages.bookings') }}</a>
 <a class="nav-link" href="{{ route('owner.services.index') }}">{{ __('messages.services') }}</a>
+<a class="nav-link" href="{{ route('owner.service-groups.index') }}">{{ __('messages.service_groups') }}</a>
 <a class="nav-link" href="{{ route('owner.schedules.index') }}">{{ __('messages.schedules') }}</a>
 <a class="nav-link" href="{{ route('owner.qrcode') }}">{{ __('messages.qr_code') }}</a>
 <a class="nav-link" href="{{ route('owner.subscription.index') }}">{{ __('messages.subscription') }}</a>

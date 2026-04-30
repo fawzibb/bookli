@@ -17,15 +17,47 @@
 
             <div class="form-group">
                 <label>{{ __('messages.select_service') }}</label>
-                <select name="service_id" id="service_id" required>
-                    <option value="">{{ __('messages.choose_service') }}</option>
 
-                    @foreach($services as $service)
-                        <option value="{{ $service->id }}">
-                            {{ $service->name }} - {{ $service->duration }} {{ __('messages.minutes') }}
-                        </option>
-                    @endforeach
-                </select>
+                @if(($settings->group_services_on_public_page ?? false) && isset($serviceGroups) && $serviceGroups->count())
+
+                    <div class="service-group-tabs">
+                        @foreach($serviceGroups as $group)
+                            @if($group->services->count())
+                                <button type="button"
+                                        class="service-group-tab"
+                                        data-group-id="{{ $group->id }}">
+                                    {{ $group->name }}
+                                </button>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    <select name="service_id" id="service_id" required>
+                        <option value="">{{ __('messages.choose_service') }}</option>
+
+                        @foreach($serviceGroups as $group)
+                            @foreach($group->services as $service)
+                                <option value="{{ $service->id }}"
+                                        data-group-id="{{ $group->id }}">
+                                    {{ $service->name }} - {{ $service->duration }} {{ __('messages.minutes') }}
+                                </option>
+                            @endforeach
+                        @endforeach
+                    </select>
+
+                @else
+
+                    <select name="service_id" id="service_id" required>
+                        <option value="">{{ __('messages.choose_service') }}</option>
+
+                        @foreach($services as $service)
+                            <option value="{{ $service->id }}">
+                                {{ $service->name }} - {{ $service->duration }} {{ __('messages.minutes') }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                @endif
             </div>
 
             <div class="form-group">
@@ -64,21 +96,51 @@
     <div class="card">
         <h2 class="section-title">{{ __('messages.available_services') }}</h2>
 
-        @foreach($services as $service)
-            <div class="service-box">
-                <strong>{{ $service->name }}</strong>
+        @if(($settings->group_services_on_public_page ?? false) && isset($serviceGroups) && $serviceGroups->count())
 
-                <div class="muted">
-                    {{ $service->duration }} {{ __('messages.minutes') }}
-                </div>
+            @foreach($serviceGroups as $group)
+                @if($group->services->count())
+                    <h4>{{ $group->name }}</h4>
 
-                @if(!is_null($service->price))
-                    <div class="muted">
-                        {{ __('messages.price') }}: ${{ number_format($service->price,2) }}
-                    </div>
+                    @foreach($group->services as $service)
+                        <div class="service-box">
+                            <strong>{{ $service->name }}</strong>
+
+                            <div class="muted">
+                                {{ $service->duration }} {{ __('messages.minutes') }}
+                            </div>
+
+                            @if(!is_null($service->price))
+                                <div class="muted">
+                                    {{ __('messages.price') }}: ${{ number_format($service->price,2) }}
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+
                 @endif
-            </div>
-        @endforeach
+            @endforeach
+
+        @else
+
+            @foreach($services as $service)
+                <div class="service-box">
+                    <strong>{{ $service->name }}</strong>
+
+                    <div class="muted">
+                        {{ $service->duration }} {{ __('messages.minutes') }}
+                    </div>
+
+                    @if(!is_null($service->price))
+                        <div class="muted">
+                            {{ __('messages.price') }}: ${{ number_format($service->price,2) }}
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+
+        @endif
+
     </div>
 
 </div>

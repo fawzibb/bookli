@@ -27,5 +27,6 @@ class BusinessSetting extends Model
     'font_family',
     'border_radius',
     'logo',
+    'group_services_on_public_page',
 ];
 }
