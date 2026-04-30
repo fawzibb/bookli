@@ -331,4 +331,5 @@ return [
 'booking_item_5' => 'And More',
 'contact_us_text' => 'Need help or have questions? Reach us anytime.',
 'business_logo' => 'Business Logo',
+'full_day' => 'Full Day',
 ];

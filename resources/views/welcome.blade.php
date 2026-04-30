@@ -783,7 +783,7 @@ html[dir="rtl"] .mini-row{
             {{ __('messages.add_email_later') }}
         @endif
     </div>
-</div>>
+</div>
     </div>
 </div>
 

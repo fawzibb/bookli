@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 style="margin-top:10px;">
             <label style="display:flex; align-items:center; gap:8px; margin:10px 0 14px;">
                 <input type="checkbox" name="full_day" value="1">
-                Full day
+                {{ __('messages.full_day') }}
             </label>
 
             <button class="btn" style="margin-top:10px;">
