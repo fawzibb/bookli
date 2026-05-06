@@ -28,5 +28,7 @@ class BusinessSetting extends Model
     'border_radius',
     'logo',
     'group_services_on_public_page',
+    'delivery_enabled',
+    'delivery_fee',
 ];
 }

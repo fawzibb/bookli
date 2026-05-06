@@ -135,7 +135,8 @@
                     value="{{ $settings->public_tagline }}"
                     placeholder="Write your business message">
             </div>
-            <label style="display:flex; gap:8px; align-items:center;">
+            @if($business->mode === 'booking')
+                <label style="display:flex; gap:8px; align-items:center;">
                     <input type="checkbox"
                         name="group_services_on_public_page"
                         value="1"
@@ -147,6 +148,29 @@
                 <p class="text-muted">
                     {{ __('messages.group_services_on_public_page_desc') }}
                 </p>
+            @endif
+            @if($business->mode === 'menu')
+                <div class="form-group">
+                    <label style="display:flex; gap:8px; align-items:center;">
+                        <input type="checkbox"
+                            name="delivery_enabled"
+                            value="1"
+                            {{ old('delivery_enabled', $settings->delivery_enabled ?? false) ? 'checked' : '' }}>
+
+                        {{ __('messages.delivery_available') }}
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">{{ __('messages.delivery_fee') }}</label>
+                    <input type="number"
+                        step="0.01"
+                        min="0"
+                        name="delivery_fee"
+                        class="input"
+                        value="{{ old('delivery_fee', $settings->delivery_fee ?? 0) }}">
+                </div>
+            @endif
 
             <button class="btn" type="submit">{{ __('messages.save_design') }}</button>
         </form>

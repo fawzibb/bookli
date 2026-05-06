@@ -348,4 +348,10 @@ return [
 'group_services_on_public_page' => 'تقسيم الخدمات في الصفحة العامة',
 'group_services_on_public_page_desc' => 'إظهار أقسام الخدمات كأزرار ليتمكن الزبون من تصفية الخدمات حسب القسم.',
 'manage_service_groups_desc' => 'نظّم خدماتك ضمن أقسام وحدد عدد الزبائن الذين يمكنهم الحجز في كل قسم بنفس الوقت.',
+'delivery_available' => 'يوجد توصيل',
+'delivery_fee' => 'سعر التوصيل',
+'order_type' => 'نوع الطلب',
+'inside_order' => 'داخل المحل / استلام',
+'delivery_order' => 'توصيل',
+'delivery_address' => 'عنوان التوصيل',
 ];

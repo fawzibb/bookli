@@ -11,6 +11,8 @@ class Order extends Model
         'customer_id',
         'order_number',
         'order_type',
+        'delivery_fee',
+        'delivery_address',
         'status',
         'scheduled_for',
         'total_amount',

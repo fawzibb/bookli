@@ -348,4 +348,10 @@ return [
 'group_services_on_public_page' => 'Group services on public page',
 'group_services_on_public_page_desc' => 'Show service groups as tabs so customers can filter services by category.',
 'manage_service_groups_desc' => 'Organize your services into groups and control how many customers can book each group at the same time.',
+'delivery_available' => 'Delivery Available',
+'delivery_fee' => 'Delivery Fee',
+'order_type' => 'Order Type',
+'inside_order' => 'Inside / Pickup',
+'delivery_order' => 'Delivery',
+'delivery_address' => 'Delivery Address',
 ];

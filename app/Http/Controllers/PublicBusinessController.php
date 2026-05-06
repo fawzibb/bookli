@@ -265,86 +265,122 @@ class PublicBusinessController extends Controller
     return back()->with('success', 'Booking created successfully.');
 }
 
-    public function storeOrder(Request $request, string $slug)
-    {
-        $business = Business::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+public function storeOrder(Request $request, string $slug)
+{
+    $business = Business::where('slug', $slug)
+        ->where('is_active', true)
+        ->firstOrFail();
 
-        abort_if($business->mode !== 'menu', 404);
+    abort_if($business->mode !== 'menu', 404);
 
-        if (!$this->isBusinessOpenNow($business)) {
-            return back()->withErrors([
-                'order' => 'We are currently closed and not accepting orders right now.',
-            ]);
-        }
+    $settings = BusinessSetting::firstOrCreate(
+        ['business_id' => $business->id],
+        [
+            'booking_enabled' => false,
+            'ordering_enabled' => true,
+            'public_theme' => 'default',
+            'delivery_enabled' => false,
+            'delivery_fee' => 0,
+        ]
+    );
 
-        $request->validate([
-            'name' => ['required'],
-            'phone' => ['required'],
-            'items' => ['required'],
-            'notes' => ['nullable'],
+    if (!$this->isBusinessOpenNow($business)) {
+        return back()->withErrors([
+            'order' => 'We are currently closed and not accepting orders right now.',
         ]);
-
-        $items = json_decode($request->items, true);
-
-        if (!is_array($items) || empty($items)) {
-            return back()->withErrors(['items' => 'Invalid order items.']);
-        }
-
-        $customer = Customer::firstOrCreate(
-            [
-                'business_id' => $business->id,
-                'phone' => $request->phone,
-            ],
-            [
-                'name' => $request->name,
-            ]
-        );
-
-        $total = 0;
-
-        foreach ($items as $item) {
-            $menuItem = \App\Models\MenuItem::where('business_id', $business->id)
-                ->where('is_available', true)
-                ->findOrFail($item['id']);
-
-            $total += $menuItem->price * (int) $item['quantity'];
-        }
-
-        $order = Order::create([
-            'business_id' => $business->id,
-            'customer_id' => $customer->id,
-            'customer_name' => $request->name,
-            'customer_phone' => $request->phone,
-            'order_number' => 'ORD-' . strtoupper(Str::random(8)),
-            'order_type' => 'instant',
-            'status' => 'pending',
-            'total_amount' => $total,
-            'notes' => $request->notes,
-        ]);
-
-        foreach ($items as $item) {
-            $menuItem = \App\Models\MenuItem::where('business_id', $business->id)
-                ->where('is_available', true)
-                ->findOrFail($item['id']);
-
-            $quantity = (int) $item['quantity'];
-
-            OrderItem::create([
-                'order_id' => $order->id,
-                'menu_item_id' => $menuItem->id,
-                'item_name' => $menuItem->name,
-                'unit_price' => $menuItem->price,
-                'quantity' => $quantity,
-                'total_price' => $menuItem->price * $quantity,
-            ]);
-        }
-
-        event(new NewOrderCreated($order));
-
-        return back()->with('success', 'Order created successfully.');
     }
+
+    $request->validate([
+        'name' => ['required'],
+        'phone' => ['required'],
+        'items' => ['required'],
+        'notes' => ['nullable'],
+
+        'order_type' => ['nullable', 'in:inside,delivery'],
+        'delivery_address' => ['nullable', 'string', 'max:255'],
+    ]);
+
+    $orderType = $request->order_type ?? 'inside';
+
+    if (!($settings->delivery_enabled ?? false) && $orderType === 'delivery') {
+        $orderType = 'inside';
+    }
+
+    if ($orderType === 'delivery' && empty($request->delivery_address)) {
+        return back()->withErrors([
+            'delivery_address' => 'Delivery address is required.',
+        ])->withInput();
+    }
+
+    $items = json_decode($request->items, true);
+
+    if (!is_array($items) || empty($items)) {
+        return back()->withErrors(['items' => 'Invalid order items.']);
+    }
+
+    $customer = Customer::firstOrCreate(
+        [
+            'business_id' => $business->id,
+            'phone' => $request->phone,
+        ],
+        [
+            'name' => $request->name,
+        ]
+    );
+
+    $total = 0;
+
+    foreach ($items as $item) {
+        $menuItem = \App\Models\MenuItem::where('business_id', $business->id)
+            ->where('is_available', true)
+            ->findOrFail($item['id']);
+
+        $total += $menuItem->price * (int) $item['quantity'];
+    }
+
+    $deliveryFee = 0;
+
+    if ($orderType === 'delivery' && ($settings->delivery_enabled ?? false)) {
+        $deliveryFee = $settings->delivery_fee ?? 0;
+    }
+
+    $order = Order::create([
+        'business_id' => $business->id,
+        'customer_id' => $customer->id,
+        'customer_name' => $request->name,
+        'customer_phone' => $request->phone,
+        'order_number' => 'ORD-' . strtoupper(Str::random(8)),
+
+        'order_type' => $orderType,
+        'delivery_fee' => $deliveryFee,
+        'delivery_address' => $orderType === 'delivery' ? $request->delivery_address : null,
+
+        'status' => 'pending',
+        'total_amount' => $total + $deliveryFee,
+        'notes' => $request->notes,
+    ]);
+
+    foreach ($items as $item) {
+        $menuItem = \App\Models\MenuItem::where('business_id', $business->id)
+            ->where('is_available', true)
+            ->findOrFail($item['id']);
+
+        $quantity = (int) $item['quantity'];
+
+        OrderItem::create([
+            'order_id' => $order->id,
+            'menu_item_id' => $menuItem->id,
+            'item_name' => $menuItem->name,
+            'unit_price' => $menuItem->price,
+            'quantity' => $quantity,
+            'total_price' => $menuItem->price * $quantity,
+        ]);
+    }
+
+    event(new NewOrderCreated($order));
+
+    return back()->with('success', 'Order created successfully.');
+}
 
     private function getAvailableSlots($business, Service $service, string $date): array
 {

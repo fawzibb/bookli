@@ -45,9 +45,10 @@ class PublicPageController extends Controller
             'button_color' => ['nullable', 'string', 'max:20'],
             'font_family' => ['nullable', 'string', 'max:100'],
             'border_radius' => ['nullable', 'string', 'max:20'],
-
-            // 👇 الجديد
             'group_services_on_public_page' => ['nullable', 'boolean'],
+
+            'delivery_enabled' => ['nullable', 'boolean'],
+            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $settings = BusinessSetting::firstOrCreate(
@@ -57,10 +58,12 @@ class PublicPageController extends Controller
                 'ordering_enabled' => $business->mode === 'menu',
                 'public_theme' => 'default',
                 'group_services_on_public_page' => false,
+                'delivery_enabled' => false,
+                'delivery_fee' => 0,
             ]
         );
 
-        $settings->update([
+        $data = [
             'public_theme' => $request->public_theme,
             'primary_color' => $request->primary_color,
             'secondary_color' => $request->secondary_color,
@@ -71,10 +74,18 @@ class PublicPageController extends Controller
             'font_family' => $request->font_family,
             'border_radius' => $request->border_radius,
             'public_tagline' => $request->public_tagline,
+        ];
 
-            // 👇 الجديد
-            'group_services_on_public_page' => $request->boolean('group_services_on_public_page'),
-        ]);
+        if ($business->mode === 'booking') {
+            $data['group_services_on_public_page'] = $request->boolean('group_services_on_public_page');
+        }
+
+        if ($business->mode === 'menu') {
+            $data['delivery_enabled'] = $request->boolean('delivery_enabled');
+            $data['delivery_fee'] = $request->delivery_fee ?? 0;
+        }
+
+        $settings->update($data);
 
         return back()->with('success', 'Public page design updated successfully.');
     }

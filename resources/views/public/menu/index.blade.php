@@ -109,6 +109,40 @@
                         <label>{{ __('messages.notes') }}</label>
                         <textarea name="notes" placeholder="{{ __('messages.order_notes_placeholder') }}"></textarea>
                     </div>
+                    @if(($settings->delivery_enabled ?? false))
+                        <div class="form-group order-type-box">
+                            <div class="form-label">{{ __('messages.order_type') }}</div>
+
+                            <label class="order-type-option">
+                                <input type="radio" name="order_type" value="inside" checked>
+                                <span>{{ __('messages.inside_order') }}</span>
+                            </label>
+
+                            <label class="order-type-option">
+                                <input type="radio" name="order_type" value="delivery">
+                                <span>
+                                    {{ __('messages.delivery_order') }}
+                                    (+{{ number_format($settings->delivery_fee ?? 0, 2) }} {{ $settings->currency ?? 'USD' }})
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-group" id="deliveryAddressBox" style="display:none;">
+                            <label>{{ __('messages.delivery_address') }}</label>
+                            <input type="text" name="delivery_address">
+                        </div>
+
+                        <script>
+                            document.querySelectorAll('input[name="order_type"]').forEach(radio => {
+                                radio.addEventListener('change', function () {
+                                    document.getElementById('deliveryAddressBox').style.display =
+                                        this.value === 'delivery' ? 'block' : 'none';
+                                });
+                            });
+                        </script>
+                    @else
+                        <input type="hidden" name="order_type" value="inside">
+                    @endif
 
                     @if($isOpenNow)
                         <button type="submit" class="btn btn-primary submit-btn">

@@ -30,10 +30,43 @@
         <div class="grid" style="grid-template-columns:1fr 1fr;">
 
             <div>
-                <p><strong>{{ __('messages.total') }}:</strong> ${{ number_format($order->total_amount, 2) }}</p>
-                <p><strong>{{ __('messages.notes') }}:</strong> {{ $order->notes ?: '-' }}</p>
-                <p><strong>{{ __('messages.created') }}:</strong> {{ $order->created_at->format('d-m-Y H:i') }}</p>
-            </div>
+    <p>
+        <strong>{{ __('messages.total') }}:</strong>
+        ${{ number_format($order->total_amount, 2) }}
+    </p>
+
+    <p>
+        <strong>{{ __('messages.order_type') }}:</strong>
+
+        @if($order->order_type === 'delivery')
+            {{ __('messages.delivery_order') }}
+        @else
+            {{ __('messages.inside_order') }}
+        @endif
+    </p>
+
+    @if($order->order_type === 'delivery')
+        <p>
+            <strong>{{ __('messages.delivery_address') }}:</strong>
+            {{ $order->delivery_address ?: '-' }}
+        </p>
+
+        <p>
+            <strong>{{ __('messages.delivery_fee') }}:</strong>
+            ${{ number_format($order->delivery_fee ?? 0, 2) }}
+        </p>
+    @endif
+
+    <p>
+        <strong>{{ __('messages.notes') }}:</strong>
+        {{ $order->notes ?: '-' }}
+    </p>
+
+    <p>
+        <strong>{{ __('messages.created') }}:</strong>
+        {{ $order->created_at->format('d-m-Y H:i') }}
+    </p>
+</div>
 
             <div>
                 <strong>{{ __('messages.items') }}</strong>
