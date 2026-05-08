@@ -83,6 +83,11 @@ async function initPushNotifications()
         body: JSON.stringify(subscription)
     });
 }
+window.addEventListener('load', function () {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js');
+    }
+});
 
 function bindNotificationDropdown(buttonId, dropdownId, countId)
 {
