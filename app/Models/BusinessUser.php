@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
+use Illuminate\Notifications\Notifiable;
 
 class BusinessUser extends Authenticatable
 {
+    use Notifiable;
+    use HasPushSubscriptions;
     protected $fillable = [
         'business_id',
         'first_name',

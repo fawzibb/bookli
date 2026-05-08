@@ -16,6 +16,8 @@ use App\Models\OrderItem;
 use Illuminate\Support\Str;
 use App\Events\NewOrderCreated;
 use App\Events\NewBookingCreated;
+use App\Notifications\NewBookingNotification;
+use App\Notifications\NewOrderNotification;
 
 class PublicBusinessController extends Controller
 {
@@ -261,8 +263,12 @@ class PublicBusinessController extends Controller
     ]);
 
     event(new NewBookingCreated($booking));
+    $business->users->each(function ($user) use ($booking) {
+    $user->notify(new NewBookingNotification($booking));
+    });
 
     return back()->with('success', 'Booking created successfully.');
+
 }
 
 public function storeOrder(Request $request, string $slug)
@@ -378,6 +384,9 @@ public function storeOrder(Request $request, string $slug)
     }
 
     event(new NewOrderCreated($order));
+    $business->users->each(function ($user) use ($order) {
+    $user->notify(new NewOrderNotification($order));
+});
 
     return back()->with('success', 'Order created successfully.');
 }

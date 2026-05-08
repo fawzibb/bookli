@@ -23,6 +23,30 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Owner\BusinessSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Owner\ServiceGroupController;
+use Illuminate\Http\Request;
+Route::post('/owner/notifications/read', function () {
+
+    auth('business')->user()->unreadNotifications->markAsRead();
+
+    return response()->json([
+        'success' => true
+    ]);
+
+})->middleware('auth:business')->name('owner.notifications.read');
+
+Route::post('/push-subscribe', function (Request $request) {
+
+    $user = auth()->guard('business')->user();
+
+    $user->updatePushSubscription(
+        $request->endpoint,
+        $request->keys['p256dh'],
+        $request->keys['auth']
+    );
+
+    return response()->json(['success' => true]);
+
+})->middleware('auth:business');
 
 Route::get('/language/{locale}', function ($locale) {
     if (! in_array($locale, ['en', 'ar'])) {
