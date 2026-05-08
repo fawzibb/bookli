@@ -37,6 +37,10 @@ function urlBase64ToUint8Array(base64String)
 
 async function initPushNotifications()
 {
+    if (!('Notification' in window)) {
+        return;
+    }
+
     if (!('serviceWorker' in navigator)) {
         return;
     }
@@ -45,7 +49,13 @@ async function initPushNotifications()
         return;
     }
 
-    const permission = await Notification.requestPermission();
+    if (Notification.permission === 'denied') {
+        return;
+    }
+
+    const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
 
     if (permission !== 'granted') {
         return;
@@ -53,12 +63,16 @@ async function initPushNotifications()
 
     const registration = await navigator.serviceWorker.register('/service-worker.js');
 
-    const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-            '{{ config('webpush.vapid.public_key') }}'
-        )
-    });
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+                '{{ config('webpush.vapid.public_key') }}'
+            )
+        });
+    }
 
     await fetch('/push-subscribe', {
         method: 'POST',
@@ -80,6 +94,8 @@ function bindNotificationDropdown(buttonId, dropdownId, countId)
 
     button.addEventListener('click', async function(e) {
         e.stopPropagation();
+
+        await initPushNotifications();
 
         dropdown.classList.toggle('open');
 
@@ -110,8 +126,6 @@ document.addEventListener('click', function() {
     document.getElementById('notificationsDropdown')?.classList.remove('open');
     document.getElementById('mobileNotificationsDropdown')?.classList.remove('open');
 });
-
-initPushNotifications();
 
 bindNotificationDropdown(
     'notificationBtn',
