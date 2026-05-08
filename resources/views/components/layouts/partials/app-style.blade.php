@@ -440,8 +440,17 @@ th,td{
     }
 
     .mobile-notifications-dropdown{
-        right:0;
-        width:290px;
-    }
+    position:fixed !important;
+    top:80px !important;
+    left:50% !important;
+    transform:translateX(-50%) !important;
+
+    width:92vw !important;
+    max-width:360px;
+
+    right:auto !important;
+
+    border-radius:18px;
+}
 }
 </style>
