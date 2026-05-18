@@ -1,4 +1,7 @@
 <x-layouts.app>
+    @php
+    $s3 = Storage::disk('s3');
+@endphp
 <x-slot name="title">Menu Items</x-slot>
 
 <x-slot name="sidebar">
@@ -32,7 +35,7 @@
     <div class="card">
         <h3>{{ __('messages.add_item') }}</h3>
 
-        <form method="POST" action="{{ route('owner.menu_items.store') }}">
+        <form method="POST" action="{{ route('owner.menu_items.store') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="form-group">
@@ -61,6 +64,10 @@
                 <label class="label">{{ __('messages.description') }}</label>
                 <textarea class="textarea" name="description"></textarea>
             </div>
+            <div class="form-group">
+                <label class="label">Image</label>
+                <input class="input" type="file" name="image" accept="image/*">
+            </div>
 
             <button class="btn" type="submit">{{ __('messages.create_item') }}</button>
         </form>
@@ -73,7 +80,7 @@
 
             <div style="border:1px solid #e5e7eb;padding:14px;border-radius:12px;margin-bottom:12px;">
 
-                <form method="POST" action="{{ route('owner.menu_items.update', $item) }}">
+                <form method="POST" action="{{ route('owner.menu_items.update', $item) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PATCH')
 
@@ -97,6 +104,18 @@
 
                     <div class="form-group">
                         <textarea class="textarea" name="description">{{ $item->description }}</textarea>
+                    </div>
+                    @if($item->image)
+                        <div style="margin-bottom:10px;">
+                            <img src="{{ Storage::disk('s3')->url($item->image) }}"
+                                alt="{{ $item->name }}"
+                                style="width:120px;height:90px;object-fit:cover;border-radius:10px;">
+                        </div>
+                    @endif
+
+                    <div class="form-group">
+                        <label class="label">Change Image</label>
+                        <input class="input" type="file" name="image" accept="image/*">
                     </div>
 
                     <label>

@@ -35,6 +35,19 @@
                         <div class="items-grid">
                             @foreach($category->menuItems as $item)
                                 <article class="item-card">
+                                    @if($item->image)
+                                        <img
+                                            src="{{ \Storage::disk('s3')->url($item->image) }}"
+                                            alt="{{ $item->name }}"
+                                            class="item-image"
+                                            loading="lazy"
+                                        >
+                                    @else
+                                        <div class="item-image item-image-placeholder">
+                                            {{ strtoupper(mb_substr($item->name, 0, 1)) }}
+                                        </div>
+                                    @endif
+
                                     <div class="item-top">
                                         <div class="item-name">{{ $item->name }}</div>
                                         <div class="item-price">${{ number_format($item->price, 2) }}</div>

@@ -347,8 +347,25 @@ button:active,
     display:block;
     font-weight:700;
     margin-bottom:10px;
+}.item-image{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    display:block;
+    border-radius:calc(var(--radius) - 6px);
+    margin-bottom:14px;
+    background:var(--bg);
 }
 
+.item-image-placeholder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    font-weight:900;
+    color:var(--primary);
+    border:1px dashed var(--border);
+}
 .cart-card .order-type-option{
     display:grid !important;
     grid-template-columns:20px 1fr !important;
@@ -386,6 +403,9 @@ button:active,
     .items-grid{
         grid-template-columns:1fr;
     }
+    .item-image{
+    height:210px;
+}
 
     .category-nav{
         top:10px;
