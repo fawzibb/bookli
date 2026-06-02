@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Owner\BusinessSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Owner\ServiceGroupController;
+use App\Http\Controllers\Admin\MenuImportController;
 use Illuminate\Http\Request;
 Route::post('/owner/notifications/read', function () {
 
@@ -168,6 +169,13 @@ Route::middleware('auth:admin')->group(function () {
         ->name('admin.businesses.reduce');
     Route::get('/admin/admins', [AdminUserController::class, 'index'])
         ->name('admin.admins.index');
+    Route::get('/admin/menu-import', [MenuImportController::class, 'index'])
+    ->name('admin.menu-import.index');
+
+    Route::post('/admin/menu-import', [MenuImportController::class, 'store'])
+        ->name('admin.menu-import.store');
+    Route::get('/admin/menu-import/sample', [MenuImportController::class, 'sample'])
+        ->name('admin.menu-import.sample');
 
     Route::post('/admin/admins', [AdminUserController::class, 'store'])
         ->name('admin.admins.store');

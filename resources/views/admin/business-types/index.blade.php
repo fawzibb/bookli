@@ -12,6 +12,7 @@
 <a class="nav-link" href="{{ route('admin.admins.index') }}">Admins</a>
 <a class="nav-link active" href="{{ route('admin.business-types.index') }}">Business Types</a>
 <a class="nav-link" href="{{ route('admin.settings.index') }}">Settings</a>
+<a class="nav-link" href="{{ route('admin.menu-import.index') }}">Import Menu</a>
 
 <form method="POST" action="{{ route('admin.logout') }}" style="margin-top:18px;">
     @csrf
