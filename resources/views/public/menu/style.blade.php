@@ -412,7 +412,7 @@ button:active,
         grid-template-columns:repeat(3, 1fr);
         gap:8px;
 
-        max-height:180px; /* حوالي 3 أسطر */
+        max-height:140px; /* حوالي 3 أسطر */
         overflow-y:auto;
 
         padding:10px;
