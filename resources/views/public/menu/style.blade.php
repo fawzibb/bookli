@@ -405,13 +405,31 @@ button:active,
     }
     .item-image{
     height:210px;
-}
+    }
 
     .category-nav{
-        top:10px;
-        overflow-x:auto;
-        flex-wrap:nowrap;
-        padding-bottom:8px;
+        display:grid;
+        grid-template-columns:repeat(3, 1fr);
+        gap:8px;
+
+        max-height:180px; /* حوالي 3 أسطر */
+        overflow-y:auto;
+
+        padding:10px;
+    }
+
+    .category-nav a{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+
+        text-align:center;
+        white-space:normal;
+        line-height:1.2;
+
+        min-height:50px;
+        padding:8px;
+        font-size:12px;
     }
 
     .cart{
