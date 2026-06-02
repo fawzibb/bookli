@@ -28,7 +28,6 @@ class BusinessSettingController extends Controller
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
-            'capacity_per_slot' => 'required|integer|min:1|max:100',
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
