@@ -1,6 +1,13 @@
 <script>
 let cart = [];
 
+function formatPrice(value){
+    return Number(value).toLocaleString('en-US', {
+        minimumFractionDigits: Number(value) % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2
+    });
+}
+
 function toggleCart(){
     document.querySelector('.cart')?.classList.toggle('show');
 }
@@ -12,10 +19,10 @@ function addToCart(id, name, price){
         existing.quantity += 1;
     }else{
         cart.push({
-            id:id,
-            name:name,
-            price:Number(price),
-            quantity:1
+            id: id,
+            name: name,
+            price: Number(price),
+            quantity: 1
         });
     }
 
@@ -56,10 +63,10 @@ function renderCart(){
         cartItems.innerHTML =
             '<div class="cart-empty">{{ __("messages.cart_empty") }}</div>';
 
-        cartTotal.textContent = '0.00';
+        cartTotal.textContent = '0';
 
         if(mobileCartTotal){
-            mobileCartTotal.textContent = '0.00';
+            mobileCartTotal.textContent = '0';
         }
 
         itemsInput.value = '';
@@ -80,7 +87,7 @@ function renderCart(){
                 </div>
 
                 <div class="cart-item-price" dir="ltr">
-                    {{ $currency }} ${(item.price * item.quantity).toFixed(2)}
+                    {{ $currency }} ${formatPrice(item.price * item.quantity)}
                 </div>
             </div>
 
@@ -94,10 +101,10 @@ function renderCart(){
         cartItems.appendChild(div);
     });
 
-    cartTotal.textContent = total.toFixed(2);
+    cartTotal.textContent = formatPrice(total);
 
     if(mobileCartTotal){
-        mobileCartTotal.textContent = total.toFixed(2);
+        mobileCartTotal.textContent = formatPrice(total);
     }
 
     itemsInput.value = JSON.stringify(cart);
