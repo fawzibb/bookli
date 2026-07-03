@@ -79,8 +79,8 @@ function renderCart(){
                     <div class="qty">{{ __("messages.qty") }}: ${item.quantity}</div>
                 </div>
 
-                <div class="cart-item-price">
-                    $${(item.price * item.quantity).toFixed(2)}
+                <div class="cart-item-price" dir="ltr">
+                    {{ $currency }} ${(item.price * item.quantity).toFixed(2)}
                 </div>
             </div>
 

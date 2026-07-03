@@ -24,7 +24,9 @@
 <a class="nav-link" href="{{ route('owner.public-page.index') }}">{{ __('messages.public_page_design') }}</a>
 <a class="nav-link active" href="{{ route('owner.settings.index') }}">{{ __('messages.settings') }}</a>
 
-
+@php
+    $settings = $business->settings;
+@endphp
 
 <form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
     @csrf
@@ -105,6 +107,18 @@
                 <input class="input" type="text" name="address"
                        value="{{ old('address', $business->address) }}">
             </div>
+            <div class="form-group">
+    <label class="label">Currency Symbol</label>
+
+    <select class="input" name="currency" required>
+        <option value="$" @selected(old('currency', $settings->currency ?? '$') == '$')>$ USD</option>
+        <option value="ل.ل" @selected(old('currency', $settings->currency ?? '$') == 'ل.ل')>ل.ل Lebanese Pound</option>
+        <option value="€" @selected(old('currency', $settings->currency ?? '$') == '€')>€ EUR</option>
+        <option value="£" @selected(old('currency', $settings->currency ?? '$') == '£')>£ GBP</option>
+        <option value="₺" @selected(old('currency', $settings->currency ?? '$') == '₺')>₺ TRY</option>
+        <option value="د.إ" @selected(old('currency', $settings->currency ?? '$') == 'د.إ')>د.إ AED</option>
+    </select>
+</div>
 
         </div>
 

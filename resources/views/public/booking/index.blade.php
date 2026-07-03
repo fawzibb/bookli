@@ -2,6 +2,14 @@
 
 @section('content')
 
+@php
+    $currency = $settings->currency ?? '$';
+
+    function publicPrice($amount) {
+        return number_format($amount, fmod($amount, 1) == 0 ? 0 : 2);
+    }
+@endphp
+
 <div class="
     grid
     @if(($settings->public_theme ?? 'default') === 'elegant')
@@ -112,7 +120,8 @@
 
                             @if(!is_null($service->price))
                                 <div class="muted">
-                                    {{ __('messages.price') }}: ${{ number_format($service->price,2) }}
+                                    {{ __('messages.price') }}:
+                                    {{ $currency }}{{ publicPrice($service->price) }}
                                 </div>
                             @endif
                         </div>
@@ -133,7 +142,8 @@
 
                     @if(!is_null($service->price))
                         <div class="muted">
-                            {{ __('messages.price') }}: ${{ number_format($service->price,2) }}
+                            {{ __('messages.price') }}:
+                            {{ $currency }}{{ publicPrice($service->price) }}
                         </div>
                     @endif
                 </div>

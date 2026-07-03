@@ -60,7 +60,7 @@ return [
 'checkout' => 'Checkout',
 'cart' => 'Cart',
 'total' => 'Total',
-'price' => 'Price $',
+'price' => 'Price',
 'name' => 'Name',
 'description' => 'Description',
 'duration' => 'Duration',

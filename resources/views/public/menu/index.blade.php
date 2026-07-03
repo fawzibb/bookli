@@ -4,6 +4,10 @@
 
 @include('public.menu.style')
 
+@php
+    $currency = $settings->currency ?? '$';
+@endphp
+
 @if(!$isOpenNow)
     <div class="status closed">
         {{ __('messages.orders_not_available') }}
@@ -50,7 +54,7 @@
 
                                     <div class="item-top">
                                         <div class="item-name">{{ $item->name }}</div>
-                                        <div class="item-price">${{ number_format($item->price, 2) }}</div>
+                                        <div class="item-price">{{ $currency }}{{ number_format($item->price, fmod($item->price, 1) == 0 ? 0 : 2) }}</div>
                                     </div>
 
                                     @if(!empty($item->description))
@@ -100,7 +104,7 @@
 
                 <div class="total">
                     <span>{{ __('messages.total') }}</span>
-                    <span>$<span id="cart-total">0.00</span></span>
+                    <span>{{ $currency }}<span id="cart-total">0.00</span></span>
                 </div>
 
                 <form method="POST" action="/b/{{ $business->slug }}/order" id="order-form">
@@ -135,7 +139,7 @@
                                 <input type="radio" name="order_type" value="delivery">
                                 <span>
                                     {{ __('messages.delivery_order') }}
-                                    (+{{ number_format($settings->delivery_fee ?? 0, 2) }} {{ $settings->currency ?? 'USD' }})
+                                    (+{{ $currency }}{{ number_format($settings->delivery_fee ?? 0, 2) }})
                                 </span>
                             </label>
                         </div>
@@ -173,7 +177,7 @@
     </div>
 
     <button type="button" class="mobile-cart-btn" onclick="toggleCart()">
-        {{ __('messages.cart') }} - $<span id="mobile-cart-total">0.00</span>
+        {{ __('messages.cart') }} - {{ $currency }}<span id="mobile-cart-total">0.00</span>
     </button>
 
 @else

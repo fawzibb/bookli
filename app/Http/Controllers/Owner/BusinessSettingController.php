@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,11 @@ class BusinessSettingController extends Controller
     public function update(Request $request)
     {
         $business = auth()->guard('business')->user()->business;
+
+        $settings = BusinessSetting::firstOrCreate([
+            'business_id' => $business->id,
+        ]);
+
         $user = auth()->guard('business')->user();
 
         $data = $request->validate([
@@ -29,32 +35,39 @@ class BusinessSettingController extends Controller
             'address' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'currency' => 'required|string|max:10',
         ]);
 
         $password = $data['password'] ?? null;
-        unset($data['password']);
+        $currency = $data['currency'];
 
-      if ($request->remove_logo == 1) {
-    if ($business->logo && Storage::disk('public')->exists($business->logo)) {
-        Storage::disk('public')->delete($business->logo);
-    }
+        unset($data['password'], $data['currency']);
 
-    $data['logo'] = null;
-}
+        if ($request->remove_logo == 1) {
+            if ($business->logo && Storage::disk('public')->exists($business->logo)) {
+                Storage::disk('public')->delete($business->logo);
+            }
 
-if ($request->hasFile('logo')) {
-    if ($business->logo && Storage::disk('public')->exists($business->logo)) {
-        Storage::disk('public')->delete($business->logo);
-    }
+            $data['logo'] = null;
+        }
 
-    $data['logo'] = $request->file('logo')->store('business-logos', 'public');
-}
+        if ($request->hasFile('logo')) {
+            if ($business->logo && Storage::disk('public')->exists($business->logo)) {
+                Storage::disk('public')->delete($business->logo);
+            }
 
-if (!$request->hasFile('logo') && $request->remove_logo != 1) {
-    unset($data['logo']);
-}
+            $data['logo'] = $request->file('logo')->store('business-logos', 'public');
+        }
+
+        if (!$request->hasFile('logo') && $request->remove_logo != 1) {
+            unset($data['logo']);
+        }
 
         $business->update($data);
+
+        $settings->update([
+            'currency' => $currency,
+        ]);
 
         if (!empty($data['phone'])) {
             $user->update([
