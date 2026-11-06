@@ -347,10 +347,11 @@ button:active,
     display:block;
     font-weight:700;
     margin-bottom:10px;
-}.item-image{
+}
+.item-image{
     width:100%;
-    height:180px;
-    object-fit:cover;
+    height:220px;
+    object-fit:fill;
     display:block;
     border-radius:calc(var(--radius) - 6px);
     margin-bottom:14px;
@@ -404,8 +405,11 @@ button:active,
         grid-template-columns:1fr;
     }
     .item-image{
-    height:210px;
-    }
+    width:100%;
+    height:220px;
+    object-fit:fill;
+    object-position:center;
+}
 
     .category-nav{
         display:grid;
