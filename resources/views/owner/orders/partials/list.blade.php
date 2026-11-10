@@ -32,7 +32,7 @@
             <div>
     <p>
         <strong>{{ __('messages.total') }}:</strong>
-        ${{ number_format($order->total_amount, 2) }}
+        {{ $order->pos_currency ?? 'USD' }} {{ number_format($order->total_amount, fmod($order->total_amount,1)==0?0:4) }}
     </p>
 
     <p>
@@ -53,7 +53,7 @@
 
         <p>
             <strong>{{ __('messages.delivery_fee') }}:</strong>
-            ${{ number_format($order->delivery_fee ?? 0, 2) }}
+            {{ $order->pos_currency ?? 'USD' }} {{ number_format($order->delivery_fee ?? 0, 2) }}
         </p>
     @endif
 
@@ -75,7 +75,7 @@
                     @foreach($order->items as $item)
                         <li style="margin-bottom:6px;">
                             {{ $item->item_name }} x {{ $item->quantity }}
-                            = ${{ number_format($item->total_price, 2) }}
+                            = {{ $order->pos_currency ?? 'USD' }} {{ number_format($item->total_price, fmod($item->total_price,1)==0?0:4) }}
                         </li>
                     @endforeach
                 </ul>
@@ -83,11 +83,18 @@
 
         </div>
 
+        @if($order->status==='pending')
+        <form method="POST" action="{{ route('owner.orders.updateStatus',$order) }}">@csrf @method('PATCH')
+        <input type="hidden" name="revision" value="{{ $order->sync_revision }}"><input type="hidden" name="status" value="confirmed">
+        <button class="btn" type="submit">{{ app()->getLocale()==='ar' ? 'قبول الطلب' : 'Accept order' }}</button></form>
+        @endif
+        <p>{{ app()->getLocale()==='ar' ? 'الإكمال من الموقع يعني أن الطلب تم تسليمه وتحصيله خارج صندوق الكاشير.' : 'Completing here means delivered and collected outside the POS cashier drawer.' }}</p>
         <div class="actions" style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
 
             <form method="POST" action="{{ route('owner.orders.updateStatus', $order) }}">
                 @csrf
                 @method('PATCH')
+                <input type="hidden" name="revision" value="{{ $order->sync_revision }}">
 
                 <input type="hidden" name="status" value="completed">
 
@@ -99,6 +106,7 @@
             <form method="POST" action="{{ route('owner.orders.updateStatus', $order) }}">
                 @csrf
                 @method('PATCH')
+                <input type="hidden" name="revision" value="{{ $order->sync_revision }}">
 
                 <input type="hidden" name="status" value="cancelled">
 

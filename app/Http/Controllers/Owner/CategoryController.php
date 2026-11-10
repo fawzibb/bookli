@@ -44,6 +44,7 @@ class CategoryController extends Controller
     {
         $businessId = Auth::guard('business')->user()->business_id;
         abort_if($category->business_id !== $businessId, 403);
+        abort_if($category->menuItems()->whereNotNull('pos_unit_uuid')->exists(),409,'Manage published POS categories from the POS.');
 
         $request->validate([
             'name' => ['required', 'max:255'],
@@ -64,6 +65,8 @@ class CategoryController extends Controller
         $businessId = Auth::guard('business')->user()->business_id;
         abort_if($category->business_id !== $businessId, 403);
 
+        abort_if($category->menuItems()->whereNotNull('pos_unit_uuid')->exists(),409,'Manage published POS categories from the POS.');
+        abort_if(\App\Models\OrderItem::whereIn('menu_item_id',$category->menuItems()->select('id'))->exists(),409,'This category contains order history. Hide it instead.');
         $category->delete();
 
         return back()->with('success', 'Category deleted successfully.');

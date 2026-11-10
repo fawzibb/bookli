@@ -60,16 +60,18 @@ class PublicBusinessController extends Controller
         }
 
         if ($business->mode === 'menu') {
-            $categories = \App\Models\Category::with(['menuItems' => function ($query) use ($business) {
+            $posCatalog=\DB::table('pos_catalogs')->where('business_id',$business->id)->exists();
+            $categories = \App\Models\Category::with(['menuItems' => function ($query) use ($business,$posCatalog) {
                 $query->where('business_id', $business->id)
                     ->where('is_available', true);
+                if($posCatalog)$query->where('pos_published',true)->whereNotNull('pos_unit_uuid');
             }])
                 ->where('business_id', $business->id)
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->get();
 
-            $isOpenNow = $this->isBusinessOpenNow($business);
+            $isOpenNow = $this->isBusinessOpenNow($business) && $settings->ordering_enabled && app(\App\Services\PosOrderSync::class)->websiteActive($business);
 
             return view('public.menu.index', compact(
                 'business',
@@ -273,122 +275,21 @@ class PublicBusinessController extends Controller
 
 public function storeOrder(Request $request, string $slug)
 {
-    $business = Business::where('slug', $slug)
-        ->where('is_active', true)
-        ->firstOrFail();
-
-    abort_if($business->mode !== 'menu', 404);
-
-    $settings = BusinessSetting::firstOrCreate(
-        ['business_id' => $business->id],
-        [
-            'booking_enabled' => false,
-            'ordering_enabled' => true,
-            'public_theme' => 'default',
-            'delivery_enabled' => false,
-            'delivery_fee' => 0,
-        ]
-    );
-
-    if (!$this->isBusinessOpenNow($business)) {
-        return back()->withErrors([
-            'order' => 'We are currently closed and not accepting orders right now.',
-        ]);
+    $business = Business::where('slug',$slug)->where('is_active',true)->firstOrFail();
+    abort_unless($business->mode==='menu',404);
+    $settings = BusinessSetting::firstOrCreate(['business_id'=>$business->id],['ordering_enabled'=>true,'booking_enabled'=>false]);
+    if (!$this->isBusinessOpenNow($business)) return back()->withErrors(['order'=>'We are currently closed.']);
+    $request->validate(['items'=>'required|string|max:100000']);
+    $input = $request->only(['name','phone','notes','request_id','delivery_address']);
+    $input['order_type'] = $request->input('order_type','inside');
+    $input['items'] = json_decode($request->items,true);
+    $order = app(\App\Services\PosOrderSync::class)->place($business,$settings,$input);
+    // Notifications are best-effort after the complete order transaction has committed.
+    if ($order->wasRecentlyCreated) {
+        try { event(new NewOrderCreated($order)); $business->users->each(fn($user)=>$user->notify(new NewOrderNotification($order))); }
+        catch (\Throwable $error) { report($error); }
     }
-
-    $request->validate([
-        'name' => ['required'],
-        'phone' => ['required'],
-        'items' => ['required'],
-        'notes' => ['nullable'],
-
-        'order_type' => ['nullable', 'in:inside,delivery'],
-        'delivery_address' => ['nullable', 'string', 'max:255'],
-    ]);
-
-    $orderType = $request->order_type ?? 'inside';
-
-    if (!($settings->delivery_enabled ?? false) && $orderType === 'delivery') {
-        $orderType = 'inside';
-    }
-
-    if ($orderType === 'delivery' && empty($request->delivery_address)) {
-        return back()->withErrors([
-            'delivery_address' => 'Delivery address is required.',
-        ])->withInput();
-    }
-
-    $items = json_decode($request->items, true);
-
-    if (!is_array($items) || empty($items)) {
-        return back()->withErrors(['items' => 'Invalid order items.']);
-    }
-
-    $customer = Customer::firstOrCreate(
-        [
-            'business_id' => $business->id,
-            'phone' => $request->phone,
-        ],
-        [
-            'name' => $request->name,
-        ]
-    );
-
-    $total = 0;
-
-    foreach ($items as $item) {
-        $menuItem = \App\Models\MenuItem::where('business_id', $business->id)
-            ->where('is_available', true)
-            ->findOrFail($item['id']);
-
-        $total += $menuItem->price * (int) $item['quantity'];
-    }
-
-    $deliveryFee = 0;
-
-    if ($orderType === 'delivery' && ($settings->delivery_enabled ?? false)) {
-        $deliveryFee = $settings->delivery_fee ?? 0;
-    }
-
-    $order = Order::create([
-        'business_id' => $business->id,
-        'customer_id' => $customer->id,
-        'customer_name' => $request->name,
-        'customer_phone' => $request->phone,
-        'order_number' => 'ORD-' . strtoupper(Str::random(8)),
-
-        'order_type' => $orderType,
-        'delivery_fee' => $deliveryFee,
-        'delivery_address' => $orderType === 'delivery' ? $request->delivery_address : null,
-
-        'status' => 'pending',
-        'total_amount' => $total + $deliveryFee,
-        'notes' => $request->notes,
-    ]);
-
-    foreach ($items as $item) {
-        $menuItem = \App\Models\MenuItem::where('business_id', $business->id)
-            ->where('is_available', true)
-            ->findOrFail($item['id']);
-
-        $quantity = (int) $item['quantity'];
-
-        OrderItem::create([
-            'order_id' => $order->id,
-            'menu_item_id' => $menuItem->id,
-            'item_name' => $menuItem->name,
-            'unit_price' => $menuItem->price,
-            'quantity' => $quantity,
-            'total_price' => $menuItem->price * $quantity,
-        ]);
-    }
-
-    event(new NewOrderCreated($order));
-    $business->users->each(function ($user) use ($order) {
-    $user->notify(new NewOrderNotification($order));
-});
-
-    return back()->with('success', 'Order created successfully.');
+    return back()->with('success','Order received and waiting for confirmation from the store.');
 }
 
     private function getAvailableSlots($business, Service $service, string $date): array

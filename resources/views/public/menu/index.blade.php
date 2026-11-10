@@ -3,9 +3,12 @@
 @section('content')
 
 @include('public.menu.style')
+<div class="status">{{ app()->getLocale()==='ar' ? 'الطلبات بانتظار تأكيد المحل. الدفع عند الاستلام أو التوصيل فقط.' : 'Orders await store confirmation. Pay on pickup or delivery only.' }}</div>
 
 @php
-    $currency = $settings->currency ?? '$';
+    $posCatalog = \DB::table('pos_catalogs')->where('business_id',$business->id)->first();
+    $currency = $posCatalog?->currency ?? ($settings->currency ?? '$');
+    $priceDecimals = $posCatalog?->decimals ?? 2;
 @endphp
 
 @if(!$isOpenNow)
@@ -38,10 +41,11 @@
 
                         <div class="items-grid">
                             @foreach($category->menuItems as $item)
+                                @php($unitPriceDecimals = min(4,strlen(rtrim(explode('.',(string)$item->price)[1] ?? '', '0'))))
                                 <article class="item-card">
-                                    @if($item->image)
+                                    @if($item->image || $item->pos_image_path)
                                         <img
-                                            src="{{ \Storage::disk('s3')->url($item->image) }}"
+                                            src="{{ $item->pos_image_path ? route('pos.menu-image',$item) : \Storage::disk('s3')->url($item->image) }}"
                                             alt="{{ $item->name }}"
                                             class="item-image"
                                             loading="lazy"
@@ -54,7 +58,7 @@
 
                                     <div class="item-top">
                                         <div class="item-name">{{ $item->name }}</div>
-                                        <div class="item-price">{{ $currency }}{{ number_format($item->price, fmod($item->price, 1) == 0 ? 0 : 2) }}</div>
+                                        <div class="item-price">{{ $currency }}{{ number_format($item->price, $unitPriceDecimals) }}</div>
                                     </div>
 
                                     @if(!empty($item->description))
@@ -111,6 +115,7 @@
                     @csrf
 
                     <input type="hidden" name="items" id="items-input">
+                    <input type="hidden" name="request_id" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
 
                     <div class="form-group">
                         <label>{{ __('messages.your_name') }}</label>

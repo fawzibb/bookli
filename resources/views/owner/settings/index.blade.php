@@ -28,7 +28,8 @@
     $settings = $business->settings;
 @endphp
 
-<form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
+@include('owner.partials.reports-nav')
+        <form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
     @csrf
     <button class="btn" style="width:100%;">{{ __('messages.logout') }}</button>
 </form>

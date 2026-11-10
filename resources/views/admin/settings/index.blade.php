@@ -7,6 +7,7 @@
 
 <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
 <a class="nav-link" href="{{ route('admin.businesses.index') }}">Businesses</a>
+@include('admin.partials.pos-nav')
 <a class="nav-link" href="{{ route('admin.codes.index') }}">Activation Codes</a>
 <a class="nav-link" href="{{ route('admin.codes.usage') }}">Code Usage</a>
 <a class="nav-link" href="{{ route('admin.admins.index') }}">Admins</a>

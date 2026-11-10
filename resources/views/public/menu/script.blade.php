@@ -1,10 +1,11 @@
 <script>
 let cart = [];
+const menuCurrency = @js($currency);
 
 function formatPrice(value){
     return Number(value).toLocaleString('en-US', {
-        minimumFractionDigits: Number(value) % 1 === 0 ? 0 : 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: Number(value) % 1 === 0 ? 0 : {{ $priceDecimals ?? 2 }},
+        maximumFractionDigits: {{ $priceDecimals ?? 2 }}
     });
 }
 
@@ -82,12 +83,12 @@ function renderCart(){
         div.innerHTML = `
             <div class="cart-item-top">
                 <div>
-                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-name"></div>
                     <div class="qty">{{ __("messages.qty") }}: ${item.quantity}</div>
                 </div>
 
                 <div class="cart-item-price" dir="ltr">
-                    {{ $currency }} ${formatPrice(item.price * item.quantity)}
+                    ${formatPrice(item.price * item.quantity)}
                 </div>
             </div>
 
@@ -98,6 +99,8 @@ function renderCart(){
             </div>
         `;
 
+        div.querySelector('.cart-item-name').textContent=item.name;
+        div.querySelector('.cart-item-price').textContent=menuCurrency+' '+formatPrice(item.price*item.quantity);
         cartItems.appendChild(div);
     });
 

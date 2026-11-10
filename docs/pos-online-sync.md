@@ -1,0 +1,53 @@
+﻿# Website catalog and online orders
+
+This release connects one primary POS installation directly to the Bookli website. The internal shop server and shared LAN terminals are deliberately deferred. Do not run separate POS inventories as concurrent primaries for the same shop.
+
+## Daily use
+
+1. Activate the primary POS normally and sign in as an employee.
+2. In **Products**, select a saved product, open **Website units…**, and check the piece/box/carton units to publish. Save the product's prices before publishing. Only the selected units' retail prices, base-unit quantities, product/category names, availability and images are sent. Cost and wholesale prices stay in the POS.
+3. Publishing switches the website menu to the selected POS units. Earlier website-only products are hidden and retained for order history. Unchecking a unit removes it from new online ordering; saved order lines keep their original price and quantity. A unit with less than one available selling pack is unavailable online.
+4. **Online orders** is intake only: **Accept / Reject**. Accept immediately opens the same invoice in **POS**, with its customer, delivery fee, address and original item prices. It is saved as an ordinary linked hold and can be held, assigned to a free table, sent to the kitchen or paid using the existing POS controls. Acceptance does not print a kitchen ticket automatically.
+5. Accepted website orders are also available in **Hold orders**. Moving or reopening them keeps their original website identity. Edited POS quantities update their reservation; website status updates cannot replace the employee's saved cart.
+6. Synchronization runs about every 15 seconds while licensed and signed in. POS checkout records stock and the closing cashier's money atomically, immediately even offline, then queues the website completion. Reconnection retries that same action without another invoice, stock deduction or cash entry. The website retains original requested lines; its final total reflects the POS invoice after changes or discounts.
+7. **Reports → Sales → By Cashier** shows issued invoices, sales/amendments, refunds, cancellations and net sales with date, search, print and CSV export. Corrections are attributed to the original selling cashier, even if another employee processed them. Amounts follow posting dates; these are sales, including customer account invoices, not drawer balances. Historical unnamed cashiers appear as Unassigned.
+
+Orders remain pending until explicitly accepted or rejected; there is no automatic time rejection. Website owners can also accept and complete orders on the website. Completing on the website explicitly means delivered and collected outside the POS drawer. On reconnection, that completion deducts stock once and creates no cashier cash entry or late kitchen preparation ticket.
+
+If a cashier receipt conflicts with website completion, the collection remains visible in **Reports → Review legacy data**. Click the review issue; a user with refund/review permission must choose whether the recorded cashier actually received the cash. Confirmation preserves the original cashier and receipt time; rejecting POS receipt creates no drawer entry. This decision is retained in the command audit. Pending cash receipts also remain review warnings until their posting is confirmed; do not collect them again.
+
+## Inventory and money invariants
+
+- Accepting reserves base quantity (`ordered packs × the pack's original contains quantity`). It does not decrement physical stock or record revenue. Counter sales cannot consume reserved quantities.
+- Confirming actual delivery records one local stock effect immediately, including while offline, inside the same SQLite transaction as its durable server command. It releases the reservation and freezes cost at that time. A repeated response, replayed event, reconnect or restart cannot apply this effect twice.
+- Legacy collection creates the ordinary POS invoice posting once, using stock already moved and cost frozen at delivery. It does not decrement stock a second time. Delayed posting retains the initiating cashier and confirmation timestamp. Currency changes cannot silently credit an old receipt into a different currency.
+- Cancellation before delivery releases reservations without adding stock. Paid-invoice refunds/cancellations continue through the existing POS financial ledger, including its restock/damaged-goods option. They enqueue a remote refund state; receiving that state does not reverse or deduct inventory again.
+- If the website cancels an order after staff recorded physical delivery offline, its local deduction is retained and visibly requires manager review. Confirming actual delivery corrects the website state without another stock movement. Cancelling an incorrect delivery report lets the reviewer choose whether goods return to stock or were spoiled/discarded. Restock corrections have their own durable effect marker. The system does not silently restore physically delivered goods.
+- Already-delivered website goods are physical facts. If recorded stock is insufficient, their movement is still recorded once and a persistent inventory review issue is raised. Unknown or deleted product mappings are retained for review; the system never guesses a product by name or overwrites stock with a server snapshot.
+- Customer order lines freeze unit identity, unit name, base quantity and retail price at checkout. Later catalog price/pack changes do not rewrite an existing order. Product and unit names remain separate on native invoices for product reporting.
+- The server processes device commands under a business-row transaction lock with a stable command UUID and payload hash. Order revisions reject stale actions. A lost response reuses the same UUID and original payload.
+- SQLite retains pending commands and catalog payloads. Feed cursors advance in the same transaction as imported order effects. Server snapshots update order state, never replace the POS stock balance.
+- Known incomplete history catch-up temporarily prevents new stock commitments. Kitchen dispatch and fresh stock publication wait until the retained feed has been drained, so an already-completed historical order cannot be printed for preparation midway through catch-up.
+
+Networking or temporary server failure retains work for retry. Explicit licensing/device rejection locks the POS through the existing licensing gate. Website and POS subscriptions remain independent. An active website can retain and manage orders while POS entitlement is stopped; POS synchronization resumes after renewal. An expired website cannot receive new orders, while active POS licensing continues to permit local work and synchronization of retained orders.
+
+## Recovery and operational limits
+
+- Review printer warnings in **Settings → Kitchen Printer**. Jobs have their existing durable fingerprints and uncertain-result handling. No physical printer can guarantee that a crash after spooling did not already print; inspect paper before manually retrying. Preparation jobs for delivered online orders are not retried.
+- Legacy website items that have no POS unit UUID cannot be mapped automatically. Their orders remain visible for review and can be rejected or completed on the website. Historical unknown quantities are not applied to an arbitrary SKU.
+- Selecting website units is explicit. Merely opening Online orders or retrying its feed does not replace a standalone website menu until a publication selection is saved.
+- Website delivery fees must be configured in the same currency as the published POS catalog. The integration does not invent an exchange rate for an existing website fee.
+- Current publication accepts at most 10,000 units per complete snapshot, nonnegative retail prices with up to four decimal places, and pack quantities with up to six decimal places. Photos are resized locally and uploaded to tenant-specific public storage; local operation does not require S3.
+- Before the first local schema upgrade, a consistent SQLite backup is created under the database's **Backups** folder. Existing records are retained. Keep the desktop activation/signing setup from the previous release; no signing key is regenerated by this change.
+
+## Server contract
+
+Authenticated routes require the primary device bearer token, an active business and POS subscription, and HTTPS outside local/testing. They use a dedicated device/IP rate limit instead of the original general 60/minute API limit.
+
+- `POST /api/pos/sync/catalog`: versioned complete selected-unit snapshot (`version`, `currency`, `decimals`, `units`). Monetary prices and base quantities are decimal strings to preserve precision through JSON/PHP. Stable unit UUIDs are tenant scoped. Same version plus same validated payload is idempotent; stale versions or changed replays return 409. Omitted items are hidden, not deleted.
+- `POST /api/pos/sync/image`: `unit_uuid` and base64 `image`, or `remove: true`. Only a published unit in the authenticated shop can be changed. Images are validated and served through `/pos-menu-images/{menuItem}`.
+- `GET /api/pos/sync/orders?cursor=N`: up to 50 tenant events, bounded by a response-size budget, with a full immutable-line order snapshot, monotonically increasing cursor, and `has_more`. Existing retained orders are backfilled without guessing their POS mappings.
+- `POST /api/pos/sync/commands`: `command_uuid`, `order_uuid`, `expected_revision`, `action`. Actions include `complete_pos` (with immutable final `pos_total` / `pos_currency`) and `cancel_pos` for locally committed POS facts, plus accept/reject/preparing/ready/deliver/collect, explicit reviewed delivery/collection corrections, and native refund state. Order transition and immutable command receipt commit together. Corrections require an explicit local manager decision, not automatic conflict resolution.
+- Public checkout uses a request UUID, server-owned prices and one transaction for header, lines and initial event. Duplicate retries reuse the same order. Notifications run after commit and cannot turn a persisted order into a failed checkout. Website history retains refunded orders and excludes their totals from completed money.
+
+Deploy the additive `2026_11_07_000002_add_pos_catalog_and_order_sync.php` migration before enabling the new web routes. Do not run schema-reset tests against a real database. Test artifacts use their own SQLite files or in-memory databases, synthetic accounts, and a separate signing key. No demo subscription, code or order is inserted into the real site by deployment.

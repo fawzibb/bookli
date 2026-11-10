@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BusinessController extends Controller
 {
@@ -46,15 +47,24 @@ class BusinessController extends Controller
 }
 public function destroy(Business $business)
 {
-    $business->subscription()?->delete();
-    $business->users()->delete();
-    $business->services()->delete();
-    $business->bookings()->delete();
-    $business->categories()->delete();
-    $business->menuItems()->delete();
-    $business->orders()->delete();
+    DB::transaction(function () use ($business) {
+        // Lock the tenant before removing its dependent records.
+        Business::whereKey($business->getKey())->lockForUpdate()->firstOrFail();
+        // Used POS codes cannot be deleted while redemption records reference them.
+        // Remove this tenant's redemptions before the business cascade reaches codes.
+        DB::table('pos_code_redemptions')
+            ->where('business_id', $business->getKey())
+            ->delete();
 
-    $business->delete();
+        $business->subscription()->delete();
+        $business->users()->delete();
+        $business->bookings()->delete();
+        $business->services()->delete();
+        $business->orders()->delete();
+        $business->menuItems()->delete();
+        $business->categories()->delete();
+        $business->delete();
+    });
 
     return back()->with('success', 'Business deleted.');
 }

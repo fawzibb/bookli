@@ -1,0 +1,1 @@
+<a class="nav-link {{ request()->routeIs('admin.pos.*') ? 'active' : '' }}" href="{{ route('admin.pos.index') }}" @if(request()->routeIs('admin.pos.*')) aria-current="page" @endif>POS subscriptions</a>

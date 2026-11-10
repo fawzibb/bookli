@@ -1,4 +1,5 @@
 <x-layouts.app>
+<a class="btn" href="{{ route('owner.pos.index') }}">POS subscription (separate)</a>
     <x-slot name="title">Subscription</x-slot>
 
     <x-slot name="sidebar">
@@ -23,6 +24,7 @@
         <a class="nav-link active" href="{{ route('owner.subscription.index') }}">{{ __('messages.subscription') }}</a>
         <a class="nav-link" href="{{ route('owner.public-page.index') }}">{{ __('messages.public_page') }}</a>
         <a class="nav-link" href="{{ route('owner.settings.index') }}">{{ __('messages.settings') }}</a>
+        @include('owner.partials.reports-nav')
         <form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
             @csrf
             <button class="btn" style="width:100%;">{{ __('messages.logout') }}</button>

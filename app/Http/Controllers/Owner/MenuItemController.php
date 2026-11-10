@@ -33,9 +33,10 @@ class MenuItemController extends Controller
     public function store(Request $request)
     {
         $businessId = Auth::guard('business')->user()->business_id;
+        abort_if(\DB::table('pos_catalogs')->where('business_id',$businessId)->exists(),403,'Manage published products and units from the POS.');
 
         $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
+            'category_id' => ['required', \Illuminate\Validation\Rule::exists('categories','id')->where('business_id',$businessId)],
             'name' => ['required', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable'],
@@ -65,9 +66,10 @@ class MenuItemController extends Controller
     {
         $businessId = Auth::guard('business')->user()->business_id;
         abort_if($menuItem->business_id !== $businessId, 403);
+        abort_if($menuItem->pos_unit_uuid,403,'Manage this product and its publication from the POS.');
 
         $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
+            'category_id' => ['required', \Illuminate\Validation\Rule::exists('categories','id')->where('business_id',$businessId)],
             'name' => ['required', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable'],
@@ -97,16 +99,11 @@ class MenuItemController extends Controller
 
     public function destroy(MenuItem $menuItem)
     {
-        $businessId = Auth::guard('business')->user()->business_id;
-        abort_if($menuItem->business_id !== $businessId, 403);
-
-        if ($menuItem->image) {
-            Storage::disk('s3')->delete($menuItem->image);
-        }
-
-        $menuItem->delete();
-
-        return back()->with('success', 'Menu item deleted successfully.');
+        abort_unless($menuItem->business_id==Auth::guard('business')->user()->business_id,403);
+        abort_if($menuItem->pos_unit_uuid,403,'Manage this product from the POS.');
+        if (\App\Models\OrderItem::where('menu_item_id',$menuItem->id)->exists()) $menuItem->update(['is_available'=>false]);
+        else $menuItem->delete();
+        return back()->with('success','Menu item removed from the menu. Order history is retained.');
     }
 
    private function uploadMenuItemImage($file, int $businessId): string

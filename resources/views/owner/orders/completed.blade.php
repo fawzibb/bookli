@@ -16,7 +16,8 @@
 <a class="nav-link" href="{{ route('owner.public-page.index') }}">{{ __('messages.public_page_design') }}</a>
 <a class="nav-link" href="{{ route('owner.settings.index') }}">{{ __('messages.settings') }}</a>
 
-<form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
+@include('owner.partials.reports-nav')
+        <form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
 @csrf
 <button class="btn" style="width:100%;">{{ __('messages.logout') }}</button>
 </form>
@@ -158,13 +159,16 @@
                             </ul>
                         </td>
 
-                        <td>${{ number_format($order->total_amount, 2) }}</td>
+                        <td>{{ $order->pos_currency ?? 'USD' }} {{ number_format($order->total_amount, fmod($order->total_amount,1)==0?0:4) }}
+                            @if($order->completion_source === 'pos')
+                                <small style="display:block;opacity:.7">Final POS invoice total. Items shown are the original online request.</small>
+                            @endif</td>
 
                         <td>{{ $order->created_at->format('d-m-Y H:i') }}</td>
 
                         <td>
                             <span class="badge badge-completed">
-                                {{ __('messages.completed') }}
+                                {{ $order->status==='refunded' ? (app()->getLocale()==='ar'?'مرتجع':'Refunded') : ($order->status==='partially_refunded'?'Partially refunded':__('messages.completed')) }}
                             </span>
                         </td>
                     </tr>
@@ -178,7 +182,7 @@
     @endif
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid #e5e7eb; text-align:right;">
     <strong>{{ __('messages.total') }}:</strong>
-    ${{ number_format($totalAmount, 2) }}
+    @foreach($totalsByCurrency as $currency=>$amount)<span style="margin-inline-start:12px">{{ $currency }} {{ number_format($amount,fmod($amount,1)==0?0:4) }}</span>@endforeach
 </div>
 </div>
 

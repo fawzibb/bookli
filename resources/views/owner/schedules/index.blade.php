@@ -32,7 +32,8 @@
         <a class="nav-link" href="{{ route('owner.public-page.index') }}">{{ __('messages.public_page_design') }}</a>
         <a class="nav-link" href="{{ route('owner.settings.index') }}">{{ __('messages.settings') }}</a>
 
-<form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
+@include('owner.partials.reports-nav')
+        <form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
 @csrf
 <button class="btn" style="width:100%;">{{ __('messages.logout') }}</button>
 </form>

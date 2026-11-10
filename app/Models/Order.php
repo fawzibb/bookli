@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
+    public function getTotalAmountAttribute($value) { return $this->getAttribute('pos_total') ?? $value; }
+    public function syncEvents() { return $this->hasMany(\App\Models\PosOrderEvent::class); }
     protected $fillable = [
         'business_id',
         'customer_id',
@@ -22,6 +24,7 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'pos_total'=>'decimal:4','sync_revision'=>'integer','delivered_at'=>'datetime',
         'scheduled_for' => 'datetime',
     ];
 

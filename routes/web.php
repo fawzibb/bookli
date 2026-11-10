@@ -1,6 +1,26 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+Route::get('/pos-menu-images/{menuItem}',function(\App\Models\MenuItem $menuItem) {
+    abort_unless($menuItem->pos_published && $menuItem->pos_image_path && $menuItem->business?->is_active,404);
+    return \Storage::disk('public')->response($menuItem->pos_image_path,null,['Cache-Control'=>'public, max-age=3600']);
+})->name('pos.menu-image');
+
+Route::middleware(['auth:business', \App\Http\Middleware\PosOwner::class])->prefix('owner/pos-subscription')->name('owner.pos.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Owner\PosSubscriptionController::class, 'index'])->name('index');
+    Route::post('/redeem', [\App\Http\Controllers\Owner\PosSubscriptionController::class, 'redeem'])->middleware('throttle:6,1')->name('redeem');
+    Route::post('/devices/{device}/revoke', [\App\Http\Controllers\Owner\PosSubscriptionController::class, 'revoke'])->name('revoke');
+});
+Route::middleware(['auth:business', \App\Http\Middleware\PosOwner::class])->get('/owner/reports',[\App\Http\Controllers\Owner\PosReportsController::class,'index'])->name('owner.reports.index');
+Route::middleware('auth:admin')->prefix('admin/pos')->name('admin.pos.')->group(function () {
+    $controller = \App\Http\Controllers\Admin\PosLicensingController::class;
+    Route::get('/', [$controller, 'index'])->name('index');
+    Route::patch('/{business}', [$controller, 'configure'])->name('configure');
+    Route::post('/{business}/codes', [$controller, 'code'])->name('code');
+    Route::post('/{business}/codes/{code}/disable', [$controller, 'disable'])->name('disable');
+    Route::post('/{business}/devices/{device}/revoke', [$controller, 'revoke'])->name('revoke');
+});
 use App\Http\Controllers\Auth\BusinessAuthController;
 use App\Http\Controllers\PublicBusinessController;
 use App\Http\Controllers\Owner\BookingController as OwnerBookingController;

@@ -30,6 +30,7 @@
         <a class="nav-link" target="_blank" href="{{ route('business.public', $user->business->slug) }}">{{ __('messages.public_page') }}</a>
         <a class="nav-link" href="{{ route('owner.public-page.index') }}">{{ __('messages.public_page_design') }}</a>
         <a class="nav-link" href="{{ route('owner.settings.index') }}">{{ __('messages.settings') }}</a>
+        @include('owner.partials.reports-nav')
 
         <form method="POST" action="{{ route('logout') }}" style="margin-top:18px;">
             @csrf
@@ -73,6 +74,9 @@
     </div>
 
     <div class="grid" style="margin-top:20px;">
+        @if(\App\Services\PosReportReader::navigationVisible())
+        <div class="card dash-card"><h3>{{ __('pos_reports.title') }}</h3><p class="page-subtitle">{{ __('pos_reports.description') }}</p><a class="btn" href="{{ route('owner.reports.index') }}">{{ __('messages.open') }}</a></div>
+        @endif
         @if($isBooking)
             <div class="card dash-card">
                 <h3>{{ __('messages.manage_bookings') }}</h3>
